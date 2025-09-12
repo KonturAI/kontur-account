@@ -3,8 +3,11 @@ from abc import abstractmethod
 from typing import Protocol
 from fastapi import Request
 
-from internal.controller.http.handler.authentication.model import *
 from internal import model
+from internal.controller.http.handler.account.model import (
+    RegisterBody, LoginBody, SetTwoFaBody, DeleteTwoFaBody,
+    VerifyTwoFaBody, RecoveryPasswordBody, ChangePasswordBody
+)
 
 
 class IAccountController(Protocol):
@@ -52,7 +55,7 @@ class IAccountService(Protocol):
     async def set_two_fa_key(self, account_id: int, google_two_fa_key: str, google_two_fa_code: str) -> None: pass
 
     @abstractmethod
-    async def delete_two_fa_key(self, account_id: int, google_two_fa_key: str) -> None: pass
+    async def delete_two_fa_key(self, account_id: int, google_two_fa_code: str) -> None: pass
 
     @abstractmethod
     async def verify_two(self, account_id: int, google_two_fa_code: str) -> bool: pass
