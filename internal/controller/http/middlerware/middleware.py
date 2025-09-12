@@ -7,8 +7,7 @@ from opentelemetry import propagate
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from internal import interface
-from internal import common
+from internal import interface, common, model
 
 
 class HttpMiddleware(interface.IHttpMiddleware):
@@ -229,3 +228,49 @@ class HttpMiddleware(interface.IHttpMiddleware):
                 raise
 
         return _logger_middleware03
+
+    def authorization_middleware04(
+            self,
+            app: FastAPI,
+            kontur_authorization_client: interface.IKonturAuthorizationClient,
+    ):
+        @app.middleware("http")
+        async def _authorization_middleware04(
+                request: Request,
+                call_next: Callable
+        ):
+            with self.tracer.start_as_current_span(
+                    "HttpMiddleware.authorization_middleware04",
+                    kind=SpanKind.INTERNAL,
+            ) as span:
+                try:
+                    access_token = request.cookies.get("Access-Token")
+                    if not access_token:
+                        authorization_data = model.AuthorizationData(
+                            account_id=0,
+                            message="guest",
+                            code=200,
+                        )
+                    else:
+                        authorization_data = await kontur_authorization_client.check_authorization(access_token)
+
+                    request.state.authorization_data = authorization_data
+
+                    if authorization_data.code == common.StatusCode.CodeErrAccessTokenExpired:
+                        self.logger.warning("Токен истек")
+                        return JSONResponse(status_code=401, content={"error": "access token expired"})
+
+                    elif authorization_data.code == common.StatusCode.CodeErrAccessTokenInvalid:
+                        self.logger.warning("Токен не валиден")
+                        return JSONResponse(status_code=403, content={"error": "access token invalid"})
+
+                    response = await call_next(request)
+
+                    span.set_status(Status(StatusCode.OK))
+                    return response
+                except Exception as e:
+                    span.record_exception(e)
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    raise e
+
+        return _authorization_middleware04

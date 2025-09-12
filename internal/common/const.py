@@ -1,3 +1,11 @@
+from dataclasses import dataclass
+
+
+@dataclass
+class StatusCode:
+    CodeErrAccessTokenExpired = 4012
+    CodeErrAccessTokenInvalid = 4013
+
 
 TRACE_ID_KEY = "trace_id"
 SPAN_ID_KEY = "span_id"

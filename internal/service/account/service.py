@@ -24,7 +24,7 @@ class AccountService(interface.IAccountService):
         self.kontur_authorization_client = kontur_authorization_client
         self.password_secret_key = password_secret_key
 
-    async def register(self, login: str, password: str) -> model.AuthorizationData:
+    async def register(self, login: str, password: str) -> model.AuthorizationDataDTO:
         with self.tracer.start_as_current_span(
                 "AccountService.register",
                 kind=SpanKind.INTERNAL,
@@ -40,7 +40,7 @@ class AccountService(interface.IAccountService):
                 jwt_token = await self.kontur_authorization_client.authorization(account_id)
 
                 span.set_status(StatusCode.OK)
-                return model.AuthorizationData(
+                return model.AuthorizationDataDTO(
                     account_id=account_id,
                     access_token=jwt_token.access_token,
                     refresh_token=jwt_token.refresh_token,
@@ -51,7 +51,7 @@ class AccountService(interface.IAccountService):
                 span.set_status(StatusCode.ERROR, str(e))
                 raise
 
-    async def login(self, login: str, password: str) -> model.AuthorizationData | None:
+    async def login(self, login: str, password: str) -> model.AuthorizationDataDTO | None:
         with self.tracer.start_as_current_span(
                 "AccountService.login",
                 kind=SpanKind.INTERNAL,
@@ -71,7 +71,7 @@ class AccountService(interface.IAccountService):
                 jwt_token = await self.kontur_authorization_client.authorization(account.id)
 
                 span.set_status(Status(StatusCode.OK))
-                return model.AuthorizationData(
+                return model.AuthorizationDataDTO(
                     account_id=account.id,
                     access_token=jwt_token.access_token,
                     refresh_token=jwt_token.refresh_token,

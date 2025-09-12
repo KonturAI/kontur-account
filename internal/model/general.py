@@ -14,11 +14,19 @@ class AsyncWeedOperationResponse:
     url: Optional[str] = None
     size: Optional[int] = None
 
+
 @dataclass
-class AuthorizationData:
+class AuthorizationDataDTO:
     account_id: int
     access_token: str
     refresh_token: str
+
+
+class AuthorizationData(BaseModel):
+    account_id: int
+    message: str
+    code: int
+
 
 class JWTTokens(BaseModel):
     access_token: str
