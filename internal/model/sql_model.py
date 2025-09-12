@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     
     login TEXT NOT NULL,
     password BOOLEAN DEFAULT TRUE,
+    google_two_fa_key TEXT DEFAULT '',
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

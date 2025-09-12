@@ -27,19 +27,13 @@ class IAccountController(Protocol):
     async def verify_two_fa(self, request: Request, body: VerifyTwoFaBody): pass
 
     @abstractmethod
-    async def forgot_password(self, body: ForgotPasswordBody): pass
-
-    @abstractmethod
-    async def forgot_password_confirm(self, token: str): pass
-
-    @abstractmethod
     async def recovery_password(self, request: Request, body: RecoveryPasswordBody): pass
 
     @abstractmethod
     async def change_password(self, request: Request, body: ChangePasswordBody): pass
 
 
-class IAuthenticationService(Protocol):
+class IAccountService(Protocol):
     @abstractmethod
     async def register(self, login: str, password: str) -> model.AuthorizationDataDTO: pass
 
@@ -55,19 +49,13 @@ class IAuthenticationService(Protocol):
     async def generate_two_fa_key(self, account_id: int) -> tuple[str, io.BytesIO]: pass
 
     @abstractmethod
-    async def set_two_fa_key(self, account_id: int, two_fa_key: str, two_fa_code: str) -> None: pass
+    async def set_two_fa_key(self, account_id: int, google_two_fa_key: str, google_two_fa_code: str) -> None: pass
 
     @abstractmethod
-    async def delete_two_fa_key(self, account_id: int, two_fa_code: str) -> None: pass
+    async def delete_two_fa_key(self, account_id: int, google_two_fa_key: str) -> None: pass
 
     @abstractmethod
-    async def verify_two_fa_key(self, account_id: int, two_fa_code: str) -> bool: pass
-
-    @abstractmethod
-    async def forget_password(self, login: str) -> None: pass
-
-    @abstractmethod
-    async def forgot_password_confirmation(self, token: str) -> model.AuthorizationDataDTO: pass
+    async def verify_two(self, account_id: int, google_two_fa_code: str) -> bool: pass
 
     @abstractmethod
     async def recovery_password(self, account_id: int, new_password: str) -> None: pass
@@ -76,12 +64,9 @@ class IAuthenticationService(Protocol):
     async def change_password(self, account_id: int, new_password: str, old_password: str) -> None: pass
 
 
-class IAuthenticationRepo(Protocol):
+class IAccountRepo(Protocol):
     @abstractmethod
     async def create_account(self, login: str, password: str) -> int: pass
-
-    @abstractmethod
-    async def update_email_two_fa(self, account_id: int, email_two_fa: bool) -> None: pass
 
     @abstractmethod
     async def account_by_id(self, account_id: int) -> list[model.Account]: pass
@@ -90,7 +75,7 @@ class IAuthenticationRepo(Protocol):
     async def account_by_login(self, login: str) -> list[model.Account]: pass
 
     @abstractmethod
-    async def set_two_fa_key(self, account_id: int, two_fa_key: str) -> None: pass
+    async def set_two_fa_key(self, account_id: int, google_two_fa_key: str) -> None: pass
 
     @abstractmethod
     async def delete_two_fa_key(self, account_id: int) -> None: pass

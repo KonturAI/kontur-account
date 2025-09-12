@@ -9,7 +9,8 @@ class Account:
     id: int
 
     login: int
-    password: int
+    password: str
+    google_two_fa_key: str
 
     created_at: datetime
 
@@ -20,6 +21,7 @@ class Account:
                 id=row.id,
                 login=row.login,
                 password=row.password,
+                google_two_fa_key=row.google_two_fa_key,
                 created_at=row.created_at
             )
             for row in rows
@@ -30,5 +32,6 @@ class Account:
             "id": self.id,
             "login": self.login,
             "password": self.password,
+            "google_two_fa_key": self.google_two_fa_key,
             "created_at": self.created_at.isoformat()
         }
