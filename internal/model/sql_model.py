@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     id SERIAL PRIMARY KEY,
     
     login TEXT NOT NULL,
-    password BOOLEAN DEFAULT TRUE,
+    password TEXT NOT NULL,
     google_two_fa_key TEXT DEFAULT '',
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

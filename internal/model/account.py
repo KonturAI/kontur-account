@@ -8,7 +8,7 @@ from enum import Enum
 class Account:
     id: int
 
-    login: int
+    login: str
     password: str
     google_two_fa_key: str
 
