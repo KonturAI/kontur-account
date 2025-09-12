@@ -14,12 +14,14 @@ class HttpMiddleware(interface.IHttpMiddleware):
     def __init__(
             self,
             tel: interface.ITelemetry,
+            kontur_authorization_client: interface.IKonturAuthorizationClient,
             prefix: str,
     ):
         self.tracer = tel.tracer()
         self.meter = tel.meter()
         self.logger = tel.logger()
         self.prefix = prefix
+        self.kontur_authorization_client = kontur_authorization_client
 
     def trace_middleware01(self, app: FastAPI):
         @app.middleware("http")
@@ -91,7 +93,7 @@ class HttpMiddleware(interface.IHttpMiddleware):
 
         return _trace_middleware01
 
-    def metrics_middleware02(self,app: FastAPI):
+    def metrics_middleware02(self, app: FastAPI):
         ok_request_counter = self.meter.create_counter(
             name=common.OK_REQUEST_TOTAL_METRIC,
             description="Total count of 200 HTTP requests",
@@ -229,11 +231,7 @@ class HttpMiddleware(interface.IHttpMiddleware):
 
         return _logger_middleware03
 
-    def authorization_middleware04(
-            self,
-            app: FastAPI,
-            kontur_authorization_client: interface.IKonturAuthorizationClient,
-    ):
+    def authorization_middleware04(self, app: FastAPI):
         @app.middleware("http")
         async def _authorization_middleware04(
                 request: Request,
@@ -252,7 +250,7 @@ class HttpMiddleware(interface.IHttpMiddleware):
                             code=200,
                         )
                     else:
-                        authorization_data = await kontur_authorization_client.check_authorization(access_token)
+                        authorization_data = await self.kontur_authorization_client.check_authorization(access_token)
 
                     request.state.authorization_data = authorization_data
 

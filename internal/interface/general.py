@@ -53,6 +53,9 @@ class IHttpMiddleware(Protocol):
     @abstractmethod
     def logger_middleware03(self, app: FastAPI): pass
 
+    @abstractmethod
+    def authorization_middleware04(self, app: FastAPI): pass
+
 
 class IRedis(Protocol):
     @abstractmethod

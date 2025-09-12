@@ -4,23 +4,15 @@ from infrastructure.pg.pg import PG
 from infrastructure.weedfs.weedfs import AsyncWeed
 from infrastructure.telemetry.telemetry import Telemetry, AlertManager
 
-from pkg.client.external.openai.client import GPTClient
-from pkg.client.external.email.client import EmailClient
-from pkg.client.external.telegram.client import LTelegramClient
+from pkg.client.internal.kontur_authorization.client import KonturAuthorizationClient
 
 from internal.controller.http.middlerware.middleware import HttpMiddleware
 
-from internal.controller.http.handler.vacancy.handler import VacancyController
-from internal.controller.http.handler.interview.handler import InterviewController
-from internal.controller.http.handler.organization.handler import TelegramHTTPController
+from internal.controller.http.handler.account.handler import AccountController
 
-from internal.service.vacancy.service import VacancyService
-from internal.service.interview.service import InterviewService
-from internal.service.interview.prompt import InterviewPromptGenerator
-from internal.service.vacancy.prompt import VacancyPromptGenerator
+from internal.service.account.service import AccountService
 
-from internal.repo.vacancy.repo import VacancyRepo
-from internal.repo.interview.repo import InterviewRepo
+from internal.repo.account.repo import AccountRepo
 
 from internal.app.http.app import NewHTTP
 
@@ -54,60 +46,37 @@ tel = Telemetry(
 # Инициализация клиентов
 db = PG(tel, cfg.db_user, cfg.db_pass, cfg.db_host, cfg.db_port, cfg.db_name)
 storage = AsyncWeed(cfg.weed_master_host, cfg.weed_master_port)
-llm_client = GPTClient(tel, cfg.openai_api_key)
-email_client = EmailClient(
+
+# Инициализация клиентов
+kontur_authorization_client = KonturAuthorizationClient(
     tel=tel,
-    smtp_host=cfg.smtp_host,
-    smtp_port=cfg.smtp_port,
-    smtp_user=cfg.smtp_user,
-    smtp_password=cfg.smtp_password,
-    use_tls=cfg.smtp_use_tls
+    host=cfg.kontur_authorization_host,
+    port=cfg.kontur_authorization_port,
 )
-telegram_client = LTelegramClient(tel, cfg.tg_api_id, cfg.tg_api_hash, cfg.tg_session_string)
 
 # Инициализация репозиториев
-vacancy_repo = VacancyRepo(tel, db)
-interview_repo = InterviewRepo(tel, db)
+account_repo = AccountRepo(tel, db)
 
 # Инициализация сервисов
-interview_prompt_generator = InterviewPromptGenerator(tel)
-vacancy_prompt_generator = VacancyPromptGenerator(tel)
-vacancy_service = VacancyService(
-    tel,
-    vacancy_repo,
-    interview_repo,
-    storage,
-    vacancy_prompt_generator,
-    llm_client,
-    email_client,
-    telegram_client
+account_service = AccountService(
+    tel=tel,
+    account_repo=account_repo,
+    kontur_authorization_client=kontur_authorization_client,
+    password_secret_key=cfg.password_secret_key
 )
 
-interview_service = InterviewService(
-    tel,
-    vacancy_repo,
-    interview_repo,
-    interview_prompt_generator,
-    llm_client,
-    storage
-)
 
 # Инициализация контроллеров
-vacancy_controller = VacancyController(tel, vacancy_service)
-interview_controller = InterviewController(tel, interview_service)
-telegram_controller = TelegramHTTPController(tel, telegram_client)
+account_controller = AccountController(tel, account_service)
 
 # Инициализация middleware
-http_middleware = HttpMiddleware(tel, cfg.prefix)
+http_middleware = HttpMiddleware(tel, kontur_authorization_client, cfg.prefix)
 
 if __name__ == "__main__":
     app = NewHTTP(
-        db,
-        vacancy_controller,
-        interview_controller,
-        telegram_controller,
-        telegram_client,
-        http_middleware,
-        cfg.prefix,
+        db=db,
+        account_controller=account_controller,
+        http_middleware=http_middleware,
+        prefix=cfg.prefix,
     )
     uvicorn.run(app, host="0.0.0.0", port=int(cfg.http_port), access_log=False)
