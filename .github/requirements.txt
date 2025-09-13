@@ -8,6 +8,7 @@ python-weed==0.8.0
 python-multipart
 bcrypt
 pyotp
+qrcode
 
 hiredis==3.2.1
 redis==6.2.0
