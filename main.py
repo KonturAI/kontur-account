@@ -1,7 +1,6 @@
 import uvicorn
 
 from infrastructure.pg.pg import PG
-from infrastructure.weedfs.weedfs import AsyncWeed
 from infrastructure.telemetry.telemetry import Telemetry, AlertManager
 
 from pkg.client.internal.kontur_authorization.client import KonturAuthorizationClient
@@ -45,7 +44,6 @@ tel = Telemetry(
 
 # Инициализация клиентов
 db = PG(tel, cfg.db_user, cfg.db_pass, cfg.db_host, cfg.db_port, cfg.db_name)
-storage = AsyncWeed(cfg.weed_master_host, cfg.weed_master_port)
 
 # Инициализация клиентов
 kontur_authorization_client = KonturAuthorizationClient(
