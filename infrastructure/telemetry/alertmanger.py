@@ -36,7 +36,7 @@ class AlertManager:
         if openai_api_key:
             self.openai_client = openai.AsyncOpenAI(
                 api_key=openai_api_key,
-                http_client=httpx.AsyncClient()
+                http_client=httpx.AsyncClient(proxy="http://32uLYMeQ:jLaDv4WK@193.160.72.227:62940")
             )
         else:
             self.openai_client = None
@@ -58,8 +58,8 @@ class AlertManager:
         trace_link = f"{self.grafana_url}/explore?schemaVersion=1&panes=%7B%220pz%22:%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22tempo%22,%22uid%22:%22tempo%22%7D,%22queryType%22:%22traceql%22,%22limit%22:20,%22tableType%22:%22traces%22,%22metricsQueryType%22:%22range%22,%22query%22:%22{trace_id}%22%7D%5D,%22range%22:%7B%22from%22:%22now-2d%22,%22to%22:%22now%22%7D%7D%7D&orgId=1"
 
         text = f"""Произошла ошибка в сервисе: <b>{self.service_name}</b>
-        TraceID: <code>{trace_id}</code>
-        SpanID: <code>{span_id}</code>"""
+TraceID: <code>{trace_id}</code>
+SpanID: <code>{span_id}</code>"""
 
         if self.openai_client is not None:
             try:
