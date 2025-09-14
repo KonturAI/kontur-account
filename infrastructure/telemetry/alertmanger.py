@@ -86,7 +86,7 @@ class AlertManager:
 <b>Сервис:</b> <code>{self.service_name}</code>
 <b>Время:</b> <code>{current_time}</code>
 <b>TraceID:</b> <code>{trace_id}</code>
-<b>SpanID:</b> <code>{span_id}...</code>"""
+<b>SpanID:</b> <code>{span_id}</code>"""
 
         # Добавляем анализ LLM если доступен
         if self.openai_client is not None:
