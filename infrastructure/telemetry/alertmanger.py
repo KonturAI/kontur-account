@@ -1,9 +1,12 @@
 import asyncio
+import re
+from datetime import datetime
 
 import httpx
 import openai
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.enums import ParseMode
 
 from infrastructure.redis_client.redis_client import RedisClient
 
@@ -53,64 +56,130 @@ class AlertManager:
         await self.redis_client.set(trace_id, "1", ttl=30)
         await self.__send_error_alert_to_tg(trace_id, span_id, traceback)
 
+    def _format_telegram_text(self, text: str) -> str:
+        # Экранируем специальные символы HTML
+        text = text.replace('&', '&amp;')
+        text = text.replace('<', '&lt;')
+        text = text.replace('>', '&gt;')
+
+        # Возвращаем обратно наши теги форматирования
+        text = text.replace('&lt;b&gt;', '<b>')
+        text = text.replace('&lt;/b&gt;', '</b>')
+        text = text.replace('&lt;i&gt;', '<i>')
+        text = text.replace('&lt;/i&gt;', '</i>')
+        text = text.replace('&lt;code&gt;', '<code>')
+        text = text.replace('&lt;/code&gt;', '</code>')
+        text = text.replace('&lt;pre&gt;', '<pre>')
+        text = text.replace('&lt;/pre&gt;', '</pre>')
+
+        return text
     async def __send_error_alert_to_tg(self, trace_id: str, span_id: str, traceback: str):
         log_link = f"{self.grafana_url}/explore?schemaVersion=1&panes=%7B%220pz%22:%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bservice_name%3D~%5C%22.%2B%5C%22%7D%20%7C%20trace_id%3D%60{trace_id}%60%20%7C%3D%20%60%60%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22loki%22%7D,%22editorMode%22:%22code%22,%22direction%22:%22backward%22%7D%5D,%22range%22:%7B%22from%22:%22now-2d%22,%22to%22:%22now%22%7D%7D%7D&orgId=1"
         trace_link = f"{self.grafana_url}/explore?schemaVersion=1&panes=%7B%220pz%22:%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22tempo%22,%22uid%22:%22tempo%22%7D,%22queryType%22:%22traceql%22,%22limit%22:20,%22tableType%22:%22traces%22,%22metricsQueryType%22:%22range%22,%22query%22:%22{trace_id}%22%7D%5D,%22range%22:%7B%22from%22:%22now-2d%22,%22to%22:%22now%22%7D%7D%7D&orgId=1"
 
-        text = f"""Произошла ошибка в сервисе: <b>{self.service_name}</b>
-TraceID: <code>{trace_id}</code>
-SpanID: <code>{span_id}</code>"""
+        # Текущее время для алерта
+        current_time = datetime.now().strftime("%H:%M:%S")
 
+        # Основная информация об ошибке
+        text = f"""🚨 <b>Ошибка в сервисе</b>
+
+<b>Сервис:</b> <code>{self.service_name}</code>
+<b>Время:</b> <code>{current_time}</code>
+<b>TraceID:</b> <code>{trace_id}</code>
+<b>SpanID:</b> <code>{span_id}...</code>"""
+
+        # Добавляем анализ LLM если доступен
         if self.openai_client is not None:
             try:
                 llm_analysis = await self.generate_analysis(traceback)
-
-                text += f"\n\n<b>Анализ LLM:</b>\n{llm_analysis}"
-
+                if llm_analysis:
+                    text += f"\n\n{llm_analysis}"
             except Exception as e:
-                pass
+                print(f"Ошибка при генерации анализа LLM: {e}", flush=True)
+                text += f"\n\n<i>⚠️ Анализ LLM временно недоступен</i>"
 
+        # Форматируем текст для Telegram
+        text = self._format_telegram_text(text)
+
+        # Кнопки для навигации
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📋 Логи", url=log_link)],
-            [InlineKeyboardButton(text="🔍 Трейс", url=trace_link)]
+            [
+                InlineKeyboardButton(text="📋 Логи", url=log_link),
+                InlineKeyboardButton(text="🔍 Трейс", url=trace_link)
+            ]
         ])
 
-        await self.bot.send_message(
-            self.alert_tg_chat_id,
-            text,
-            parse_mode="HTML",
-            message_thread_id=self.alert_tg_chat_thread_id,
-            reply_markup=keyboard
-        )
-
-    async def generate_analysis(
-            self,
-            traceback: str,
-    ) -> str:
         try:
-            system_prompt = (
-                "Ты инженер по наблюдаемости. "
-                "Ниже лог ошибки Python со стеком вызова. "
-                "Опиши:\n"
-                "1. Где именно возникла ошибка (файл, класс, метод)\n"
-                "2. Какой тип ошибки и сообщение\n"
-                "3. Как её можно исправить."
-                "Формат ответа: текст для телеграм-бота"
+            await self.bot.send_message(
+                self.alert_tg_chat_id,
+                text,
+                message_thread_id=self.alert_tg_chat_thread_id,
+                reply_markup=keyboard,
+                parse_mode=ParseMode.HTML
+            )
+        except Exception as e:
+            print(f"Ошибка при отправке сообщения в Telegram: {e}", flush=True)
+
+            simple_text = f"🚨 Ошибка в сервисе {self.service_name}\nTraceID: {trace_id}"
+            await self.bot.send_message(
+                self.alert_tg_chat_id,
+                simple_text,
+                message_thread_id=self.alert_tg_chat_thread_id,
+                reply_markup=keyboard
             )
 
-            history: list = [
+    async def generate_analysis(self, traceback: str) -> str:
+        try:
+            system_prompt = """Ты опытный Python-разработчик и специалист по мониторингу.
+Проанализируй stacktrace и дай краткий, но информативный анализ для команды разработки.
+
+Формат ответа должен быть оптимизирован для Telegram (HTML разметка):
+- Используй <b></b> для выделения важных частей
+- Используй <code></code> для кода и названий файлов/методов
+- Используй <i></i> для дополнительных пояснений
+- Максимум 300-400 символов
+- Структура: проблема → причина → решение
+
+НЕ ПИШИ:
+- Длинные объяснения
+- Очевидные вещи
+- "Данная ошибка", "В данном случае"
+- Повторения информации из самого traceback
+
+ПИШИ:
+- Конкретно и по делу
+- Практичные советы
+- Возможные причины
+- Быстрые способы исправления"""
+
+            # Формируем сообщение пользователя с контекстом
+            user_message = f"""Stacktrace:
+{traceback}
+
+Дополнительный контекст:
+- Сервис: {self.service_name}
+- Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+
+            history = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": traceback}
+                {"role": "user", "content": user_message}
             ]
 
-
             response = await self.openai_client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=history,
-                    temperature=0.3,
-                )
+                model="gpt-4o-mini",
+                messages=history,
+                temperature=0.2,
+            )
+
             llm_response = response.choices[0].message.content
-            return llm_response
+
+            if llm_response:
+                # Добавляем заголовок с эмодзи
+                formatted_response = f"🤖 <b>Анализ ошибки:</b>\n{llm_response.strip()}"
+                return formatted_response
+            else:
+                return ""
 
         except Exception as err:
-            pass
+            print(f"Ошибка при генерации анализа: {err}", flush=True)
+            return ""
