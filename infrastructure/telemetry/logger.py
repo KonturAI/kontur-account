@@ -3,7 +3,6 @@ import logging
 import inspect
 from typing import Union
 
-import asyncio
 from opentelemetry import trace
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 
@@ -54,7 +53,11 @@ class OtelLogger(interface.IOtelLogger):
 
             if level == "ERROR":
                 if self.alert_manger is not None:
-                    self.alert_manger.send_error_alert(trace_id, span_id)
+                    self.alert_manger.send_error_alert(
+                        trace_id,
+                        span_id,
+                        attributes[common.TRACEBACK_KEY]
+                    )
 
         log_level = getattr(logging, level.upper(), logging.INFO)
         self.logger.log(log_level, self.service_name + " | " + message, extra=attributes)

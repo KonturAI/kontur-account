@@ -38,3 +38,5 @@ class Config:
         self.kontur_authorization_host = os.getenv("KONTUR_AUTHORIZATION_CONTAINER_NAME", "kontur-authorization-postgres")
         self.kontur_authorization_port = os.getenv("KONTUR_AUTHORIZATION_PORT", "8001")
         self.password_secret_key = os.getenv("KONTUR_PASSWORD_SECRET_KEY", "default-secret-key-change-me")
+
+        self.openai_api_key = os.getenv("OPENAI_API_KEY", None)
