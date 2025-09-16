@@ -43,7 +43,7 @@ def include_account_handlers(
 ):
     # Регистрация пользователя
     app.add_api_route(
-        prefix + "/account/register",
+        prefix + "/register",
         account_controller.register,
         methods=["POST"],
         tags=["Account"],
@@ -52,7 +52,7 @@ def include_account_handlers(
 
     # Вход пользователя
     app.add_api_route(
-        prefix + "/account/login",
+        prefix + "/login",
         account_controller.login,
         methods=["POST"],
         tags=["Account"],
@@ -61,7 +61,7 @@ def include_account_handlers(
 
     # Генерация 2FA QR кода
     app.add_api_route(
-        prefix + "/account/2fa/generate",
+        prefix + "/2fa/generate",
         account_controller.generate_two_fa,
         methods=["GET"],
         tags=["Account"],
@@ -70,7 +70,7 @@ def include_account_handlers(
 
     # Установка 2FA
     app.add_api_route(
-        prefix + "/account/2fa/set",
+        prefix + "/2fa/set",
         account_controller.set_two_fa,
         methods=["POST"],
         tags=["Account"],
@@ -79,7 +79,7 @@ def include_account_handlers(
 
     # Удаление 2FA
     app.add_api_route(
-        prefix + "/account/2fa/delete",
+        prefix + "/2fa/delete",
         account_controller.delete_two_fa,
         methods=["DELETE"],
         tags=["Account"],
@@ -88,7 +88,7 @@ def include_account_handlers(
 
     # Верификация 2FA
     app.add_api_route(
-        prefix + "/account/2fa/verify",
+        prefix + "/2fa/verify",
         account_controller.verify_two_fa,
         methods=["POST"],
         tags=["Account"],
@@ -97,7 +97,7 @@ def include_account_handlers(
 
     # Восстановление пароля
     app.add_api_route(
-        prefix + "/account/password/recovery",
+        prefix + "/password/recovery",
         account_controller.recovery_password,
         methods=["POST"],
         tags=["Account"],
@@ -106,7 +106,7 @@ def include_account_handlers(
 
     # Изменение пароля
     app.add_api_route(
-        prefix + "/account/password/change",
+        prefix + "/password/change",
         account_controller.change_password,
         methods=["PUT"],
         tags=["Account"],
