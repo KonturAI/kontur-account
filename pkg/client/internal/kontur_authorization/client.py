@@ -41,7 +41,7 @@ class KonturAuthorizationClient(interface.IKonturAuthorizationClient):
                     "two_fa_status": two_fa_status,
                     "tole": tole
                 }
-                response = await self.client.post("/", json=body)
+                response = await self.client.post("", json=body)
                 json_response = response.json()
 
                 span.set_status(Status(StatusCode.OK))
