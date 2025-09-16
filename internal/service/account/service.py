@@ -37,7 +37,11 @@ class AccountService(interface.IAccountService):
 
                 account_id = await self.account_repo.create_account(login, hashed_password)
 
-                jwt_token = await self.kontur_authorization_client.authorization(account_id)
+                jwt_token = await self.kontur_authorization_client.authorization(
+                    account_id,
+                    False,
+                    "employee"
+                )
 
                 span.set_status(StatusCode.OK)
                 return model.AuthorizationDataDTO(
@@ -68,7 +72,11 @@ class AccountService(interface.IAccountService):
                 if not self.__verify_password(account.password, password):
                     raise common.ErrInvalidPassword()
 
-                jwt_token = await self.kontur_authorization_client.authorization(account.id)
+                jwt_token = await self.kontur_authorization_client.authorization(
+                    account.id,
+                    True if account.google_two_fa_key else False,
+                    "employee"
+                )
 
                 span.set_status(Status(StatusCode.OK))
                 return model.AuthorizationDataDTO(

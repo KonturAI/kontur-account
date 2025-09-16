@@ -6,7 +6,12 @@ from internal import model
 
 class IKonturAuthorizationClient(Protocol):
     @abstractmethod
-    async def authorization(self, account_id: int) -> model.JWTTokens: pass
+    async def authorization(
+            self,
+            account_id: int,
+            two_fa_status: bool,
+            tole: str
+    ) -> model.JWTTokens: pass
 
     @abstractmethod
     async def check_authorization(self, access_token: str) -> model.AuthorizationData: pass
