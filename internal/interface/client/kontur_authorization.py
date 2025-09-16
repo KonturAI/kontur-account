@@ -10,7 +10,7 @@ class IKonturAuthorizationClient(Protocol):
             self,
             account_id: int,
             two_fa_status: bool,
-            tole: str
+            role: str
     ) -> model.JWTTokens: pass
 
     @abstractmethod
