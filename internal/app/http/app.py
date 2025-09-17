@@ -50,6 +50,14 @@ def include_account_handlers(
         response_model=RegisterResponse,
     )
 
+    app.add_api_route(
+        prefix + "/register/tg",
+        account_controller.register,
+        methods=["POST"],
+        tags=["Account"],
+        response_model=RegisterResponse,
+    )
+
     # Вход пользователя
     app.add_api_route(
         prefix + "/login",
