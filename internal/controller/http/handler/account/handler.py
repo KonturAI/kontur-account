@@ -70,6 +70,57 @@ class AccountController(interface.IAccountController):
                 span.set_status(Status(StatusCode.ERROR, str(err)))
                 raise err
 
+    async def register_from_tg(self, body: RegisterBody) -> JSONResponse:
+        with self.tracer.start_as_current_span(
+                "AccountController.register_from_tg",
+                kind=SpanKind.INTERNAL,
+                attributes={"login": body.login}
+        ) as span:
+            try:
+                self.logger.info("Registration request", {"login": body.login})
+
+                authorization_data = await self.account_service.register_from_tg(
+                    login=body.login,
+                    password=body.password
+                )
+
+                self.logger.info("Registration successful", {
+                    "login": body.login,
+                    "account_id": authorization_data.account_id
+                })
+
+                span.set_status(Status(StatusCode.OK))
+                response = JSONResponse(
+                    status_code=201,
+                    content={
+                        "message": "Account created successfully",
+                        "account_id": authorization_data.account_id
+                    }
+                )
+
+                # Устанавливаем токены в cookies
+                response.set_cookie(
+                    key="Access-Token",
+                    value=authorization_data.access_token,
+                    httponly=True,
+                    secure=True,
+                    samesite="strict"
+                )
+                response.set_cookie(
+                    key="Refresh-Token",
+                    value=authorization_data.refresh_token,
+                    httponly=True,
+                    secure=True,
+                    samesite="strict"
+                )
+
+                return response
+
+            except Exception as err:
+                span.record_exception(err)
+                span.set_status(Status(StatusCode.ERROR, str(err)))
+                raise err
+
     async def login(self, body: LoginBody) -> JSONResponse:
         with self.tracer.start_as_current_span(
                 "AccountController.login",

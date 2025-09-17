@@ -55,6 +55,37 @@ class AccountService(interface.IAccountService):
                 span.set_status(StatusCode.ERROR, str(e))
                 raise
 
+    async def register_from_tg(self, login: str, password: str) -> model.AuthorizationDataDTO:
+        with self.tracer.start_as_current_span(
+                "AccountService.register_from_tg",
+                kind=SpanKind.INTERNAL,
+                attributes={
+                    "login": login
+                }
+        ) as span:
+            try:
+                hashed_password = self.__hash_password(password)
+
+                account_id = await self.account_repo.create_account(login, hashed_password)
+
+                jwt_token = await self.kontur_authorization_client.authorization_tg(
+                    account_id,
+                    False,
+                    "employee"
+                )
+
+                span.set_status(StatusCode.OK)
+                return model.AuthorizationDataDTO(
+                    account_id=account_id,
+                    access_token=jwt_token.access_token,
+                    refresh_token=jwt_token.refresh_token,
+                )
+
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(StatusCode.ERROR, str(e))
+                raise
+
     async def login(self, login: str, password: str) -> model.AuthorizationDataDTO | None:
         with self.tracer.start_as_current_span(
                 "AccountService.login",

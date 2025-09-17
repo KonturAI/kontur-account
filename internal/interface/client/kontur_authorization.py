@@ -14,4 +14,12 @@ class IKonturAuthorizationClient(Protocol):
     ) -> model.JWTTokens: pass
 
     @abstractmethod
+    async def authorization_tg(
+            self,
+            account_id: int,
+            two_fa_status: bool,
+            role: str
+    ) -> model.JWTTokens: pass
+
+    @abstractmethod
     async def check_authorization(self, access_token: str) -> model.AuthorizationData: pass

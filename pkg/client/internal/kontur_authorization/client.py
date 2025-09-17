@@ -51,6 +51,35 @@ class KonturAuthorizationClient(interface.IKonturAuthorizationClient):
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
 
+    async def authorization_tg(
+            self,
+            account_id: int,
+            two_fa_status: bool,
+            role: str
+    ) -> model.JWTTokens:
+        with self.tracer.start_as_current_span(
+                "KonturAuthorizationClient.authorization_tg",
+                kind=SpanKind.CLIENT,
+                attributes={
+                    "account_id": account_id
+                }
+        ) as span:
+            try:
+                body = {
+                    "account_id": account_id,
+                    "two_fa_status": two_fa_status,
+                    "role": role
+                }
+                response = await self.client.post("/tg", json=body)
+                json_response = response.json()
+
+                span.set_status(Status(StatusCode.OK))
+                return model.JWTTokens(**json_response)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
+
     async def check_authorization(self, access_token: str) -> model.AuthorizationData:
         with self.tracer.start_as_current_span(
                 "KonturAuthorizationClient.check_authorization",
