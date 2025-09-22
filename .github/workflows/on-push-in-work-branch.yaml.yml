@@ -1,0 +1,95 @@
+name: Push in work brunch - Update Dev Server
+
+on:
+    push:
+        branches:
+            - '**'
+            - '!main'
+            - '!master'
+            - '!develop'
+
+jobs:
+    update-branch:
+        runs-on: self-hosted
+
+        steps:
+            -   name: Get branch and author info
+                run: |
+                    echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+                    echo "AUTHOR_NAME=${{ github.actor }}" >> $GITHUB_ENV
+
+            -   name: Load server configuration and check assignment
+                run: |
+                    if [ ! -f "/root/.env.servers" ]; then
+                      echo "❌ Файл конфигурации серверов .env.servers не найден!"
+                      exit 1
+                    fi
+                    
+                    # Загружаем переменные окружения из .env.servers
+                    set -a
+                    source /root/.env.servers
+                    set +a
+                    
+                    
+                    # Формируем имена переменных для текущего автора
+                    HOST_VAR="${AUTHOR_NAME}_HOST"
+                    PASSWORD_VAR="${AUTHOR_NAME}_PASSWORD"
+                    
+                    # Получаем значения переменных
+                    eval "SERVER_HOST=\$$HOST_VAR"
+                    eval "SERVER_PASSWORD=\$$PASSWORD_VAR"
+                    
+                    if [ -z "$SERVER_HOST" ] || [ -z "$SERVER_PASSWORD" ]; then
+                      echo "❌ Конфигурация сервера для разработчика $AUTHOR_NAME не найдена!"
+                      echo "   Убедитесь, что в .env.servers есть переменные: ${HOST_VAR} и ${PASSWORD_VAR}"
+                      exit 1
+                    fi
+                    
+                    echo "SERVER_HOST=$SERVER_HOST" >> $GITHUB_ENV
+                    echo "SERVER_PASSWORD=$SERVER_PASSWORD" >> $GITHUB_ENV
+                    echo "✅ Найдена конфигурация сервера для $AUTHOR_NAME: $SERVER_HOST"
+
+            -   name: Update branch on developer server
+                run: |
+                    # Используем sshpass для аутентификации по паролю
+                    sshpass -p "${{ env.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@${{ env.SERVER_HOST }} -p 22 << 'EOF'
+                    echo "🔄 Обновляем ветку ${{ env.BRANCH_NAME }} для ${{ env.AUTHOR_NAME }}"
+                    
+                    cd kontur/kontur-account
+                    git fetch origin
+                    
+                    # Сохраняем текущую ветку для проверки
+                    CURRENT_BRANCH=$(git branch --show-current)
+                    
+                    # Очищаем старые ветки если текущая не main
+                    if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "master" ]; then
+                        echo "🧹 Очищаем старые ветки (текущая ветка: $CURRENT_BRANCH)"
+                        
+                        # Переключаемся на main для безопасного удаления веток
+                        git checkout main 2>/dev/null || git checkout master 2>/dev/null || echo "⚠️ Не удалось переключиться на main/master"
+                        
+                        # Удаляем все локальные ветки кроме main/master и текущей целевой ветки
+                        git branch | grep -v -E "(main|master|\*|${{ env.BRANCH_NAME }})" | xargs -r git branch -D
+                        
+                        # Очищаем удаленные ветки
+                        git remote prune origin
+                        
+                        echo "✅ Очистка веток завершена"
+                    fi
+                    
+                    if git show-ref --verify --quiet refs/heads/${{ env.BRANCH_NAME }}; then
+                        echo "Ветка существует локально, делаем pull"
+                        git checkout ${{ env.BRANCH_NAME }}
+                        git pull origin ${{ env.BRANCH_NAME }}
+                    else
+                        echo "Первый деплой ветки, создаем и переключаемся"
+                        git checkout -b ${{ env.BRANCH_NAME }} origin/${{ env.BRANCH_NAME }}
+                    fi
+                    
+                    cd ../kontur-system
+                    
+                    export $(cat env/dev/.env.app env/dev/.env.db env/dev/.env.monitoring | xargs)
+                    docker compose -f ./docker-compose/app.yaml up -d --build kontur-account
+                    
+                    echo "✅ Ветка ${{ env.BRANCH_NAME }} успешно обновлена на сервере ${{ env.SERVER_HOST }}!"
+                    EOF
