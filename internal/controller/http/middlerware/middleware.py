@@ -15,14 +15,14 @@ class HttpMiddleware(interface.IHttpMiddleware):
     def __init__(
             self,
             tel: interface.ITelemetry,
-            kontur_authorization_client: interface.IKonturAuthorizationClient,
+            loom_authorization_client: interface.ILoomAuthorizationClient,
             prefix: str,
     ):
         self.tracer = tel.tracer()
         self.meter = tel.meter()
         self.logger = tel.logger()
         self.prefix = prefix
-        self.kontur_authorization_client = kontur_authorization_client
+        self.loom_authorization_client = loom_authorization_client
 
     def trace_middleware01(self, app: FastAPI):
         @app.middleware("http")
@@ -252,7 +252,7 @@ class HttpMiddleware(interface.IHttpMiddleware):
                             code=200,
                         )
                     else:
-                        authorization_data = await self.kontur_authorization_client.check_authorization(access_token)
+                        authorization_data = await self.loom_authorization_client.check_authorization(access_token)
 
                     request.state.authorization_data = authorization_data
 

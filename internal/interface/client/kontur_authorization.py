@@ -4,7 +4,7 @@ from typing import Protocol
 from internal import model
 
 
-class IKonturAuthorizationClient(Protocol):
+class ILoomAuthorizationClient(Protocol):
     @abstractmethod
     async def authorization(
             self,

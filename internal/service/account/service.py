@@ -15,13 +15,13 @@ class AccountService(interface.IAccountService):
             self,
             tel: interface.ITelemetry,
             account_repo: interface.IAccountRepo,
-            kontur_authorization_client: interface.IKonturAuthorizationClient,
+            loom_authorization_client: interface.ILoomAuthorizationClient,
             password_secret_key: str
     ):
         self.tracer = tel.tracer()
         self.logger = tel.logger()
         self.account_repo = account_repo
-        self.kontur_authorization_client = kontur_authorization_client
+        self.loom_authorization_client = loom_authorization_client
         self.password_secret_key = password_secret_key
 
     async def register(self, login: str, password: str) -> model.AuthorizationDataDTO:
@@ -37,7 +37,7 @@ class AccountService(interface.IAccountService):
 
                 account_id = await self.account_repo.create_account(login, hashed_password)
 
-                jwt_token = await self.kontur_authorization_client.authorization(
+                jwt_token = await self.loom_authorization_client.authorization(
                     account_id,
                     False,
                     "employee"
@@ -68,7 +68,7 @@ class AccountService(interface.IAccountService):
 
                 account_id = await self.account_repo.create_account(login, hashed_password)
 
-                jwt_token = await self.kontur_authorization_client.authorization_tg(
+                jwt_token = await self.loom_authorization_client.authorization_tg(
                     account_id,
                     False,
                     "employee"
@@ -103,7 +103,7 @@ class AccountService(interface.IAccountService):
                 if not self.__verify_password(account.password, password):
                     raise common.ErrInvalidPassword()
 
-                jwt_token = await self.kontur_authorization_client.authorization(
+                jwt_token = await self.loom_authorization_client.authorization(
                     account.id,
                     True if account.google_two_fa_key else False,
                     "employee"
