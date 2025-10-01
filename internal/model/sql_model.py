@@ -19,6 +19,6 @@ create_tables_queries = [
     create_account_table,
 ]
 
-drop_tables_queries = [
+drop_queries = [
     drop_account_table,
 ]

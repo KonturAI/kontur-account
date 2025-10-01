@@ -147,7 +147,7 @@ def create_table_handler(db: interface.IDB):
 def drop_table_handler(db: interface.IDB):
     async def drop_table():
         try:
-            await db.multi_query(model.drop_tables_queries)
+            await db.multi_query(model.drop_queries)
         except Exception as err:
             raise err
 
