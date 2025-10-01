@@ -53,14 +53,14 @@ class AccountController(interface.IAccountController):
                     value=authorization_data.access_token,
                     httponly=True,
                     secure=True,
-                    samesite="strict"
+                    samesite="lax"
                 )
                 response.set_cookie(
                     key="Refresh-Token",
                     value=authorization_data.refresh_token,
                     httponly=True,
                     secure=True,
-                    samesite="strict"
+                    samesite="lax",
                 )
 
                 return response
@@ -104,14 +104,14 @@ class AccountController(interface.IAccountController):
                     value=authorization_data.access_token,
                     httponly=True,
                     secure=True,
-                    samesite="strict"
+                    samesite="lax"
                 )
                 response.set_cookie(
                     key="Refresh-Token",
                     value=authorization_data.refresh_token,
                     httponly=True,
                     secure=True,
-                    samesite="strict"
+                    samesite="lax"
                 )
 
                 return response
@@ -155,14 +155,14 @@ class AccountController(interface.IAccountController):
                     value=authorization_data.access_token,
                     httponly=True,
                     secure=True,
-                    samesite="strict"
+                    samesite="lax"
                 )
                 response.set_cookie(
                     key="Refresh-Token",
                     value=authorization_data.refresh_token,
                     httponly=True,
                     secure=True,
-                    samesite="strict"
+                    samesite="lax"
                 )
 
                 return response
