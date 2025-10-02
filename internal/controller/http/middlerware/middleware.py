@@ -72,12 +72,6 @@ class HttpMiddleware(interface.IHttpMiddleware):
                         root_span.set_status(Status(StatusCode.ERROR, str(err)))
                         root_span.set_attribute(common.ERROR_KEY, True)
                         raise err
-                    elif status_code >= 400:
-                        err = Exception("Client error")
-                        root_span.record_exception(err)
-                        root_span.set_status(Status(StatusCode.ERROR, str(err)))
-                        root_span.set_attribute(common.ERROR_KEY, True)
-                        raise err
                     else:
                         root_span.set_status(Status(StatusCode.OK))
 
@@ -257,6 +251,11 @@ class HttpMiddleware(interface.IHttpMiddleware):
                         authorization_data = await self.loom_authorization_client.check_authorization(access_token)
 
                     request.state.authorization_data = authorization_data
+
+                    if "login" in request.url.path:
+                        response = await call_next(request)
+                        span.set_status(Status(StatusCode.OK))
+                        return response
 
                     if authorization_data.status_code == 403:
                         self.logger.warning(authorization_data.message)
