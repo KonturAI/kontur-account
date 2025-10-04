@@ -38,5 +38,3 @@ class Config:
         self.loom_authorization_host = os.getenv("LOOM_AUTHORIZATION_CONTAINER_NAME", "loom-authorization-postgres")
         self.loom_authorization_port = os.getenv("LOOM_AUTHORIZATION_PORT", "8001")
         self.password_secret_key = os.getenv("LOOM_PASSWORD_SECRET_KEY", "default-secret-key-change-me")
-
-        self.openai_api_key = os.getenv("OPENAI_API_KEY", None)

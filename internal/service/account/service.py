@@ -109,7 +109,7 @@ class AccountService(interface.IAccountService):
                     "employee"
                 )
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return model.AuthorizationDataDTO(
                     account_id=account.id,
                     access_token=jwt_token.access_token,
@@ -139,7 +139,7 @@ class AccountService(interface.IAccountService):
                 qrcode.make(totp_auth).save(qr_image)
                 qr_image.seek(0)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return two_fa_key, qr_image
             except Exception as e:
                 span.record_exception(e)
@@ -166,7 +166,7 @@ class AccountService(interface.IAccountService):
 
                 await self.account_repo.set_two_fa_key(account_id, google_two_fa_key)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return None
             except Exception as e:
                 span.record_exception(e)
@@ -192,7 +192,7 @@ class AccountService(interface.IAccountService):
 
                 await self.account_repo.delete_two_fa_key(account_id)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
             except Exception as e:
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -213,7 +213,7 @@ class AccountService(interface.IAccountService):
 
                 is_two_fa_verified = self.__verify_two_fa(google_two_fa_code, account.google_two_fa_key)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return is_two_fa_verified
             except Exception as e:
                 span.record_exception(e)
@@ -233,7 +233,7 @@ class AccountService(interface.IAccountService):
                 new_hashed_password = self.__hash_password(new_password)
                 await self.account_repo.update_password(account_id, new_hashed_password)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
             except Exception as e:
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -256,7 +256,7 @@ class AccountService(interface.IAccountService):
                 new_hashed_password = self.__hash_password(new_password)
                 await self.account_repo.update_password(account_id, new_hashed_password)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
             except Exception as e:
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -270,7 +270,7 @@ class AccountService(interface.IAccountService):
             try:
                 peppered_password = self.password_secret_key + password
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return bcrypt.checkpw(peppered_password.encode('utf-8'), hashed_password.encode('utf-8'))
             except Exception as e:
                 span.record_exception(e)
@@ -285,7 +285,7 @@ class AccountService(interface.IAccountService):
             try:
                 totp = pyotp.TOTP(two_fa_key)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return totp.verify(two_fa_code)
             except Exception as e:
                 span.record_exception(e)
@@ -301,7 +301,7 @@ class AccountService(interface.IAccountService):
                 peppered_password = self.password_secret_key + password
                 hashed_password = bcrypt.hashpw(peppered_password.encode('utf-8'), bcrypt.gensalt())
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return hashed_password.decode('utf-8')
             except Exception as e:
                 span.record_exception(e)
