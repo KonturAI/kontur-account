@@ -95,10 +95,12 @@ class AccountService(interface.IAccountService):
             try:
                 account = await self.account_repo.account_by_login(login)
                 if not account:
+                    self.logger.info("Аккаунт не найден")
                     raise common.ErrAccountNotFound()
                 account = account[0]
 
                 if not self.__verify_password(account.password, password):
+                    self.logger.info("Неверный пароль")
                     raise common.ErrInvalidPassword()
 
                 jwt_token = await self.loom_authorization_client.authorization(
@@ -154,10 +156,12 @@ class AccountService(interface.IAccountService):
                 account = (await self.account_repo.account_by_id(account_id))[0]
 
                 if account.google_two_fa_key:
+                    self.logger.info("2FA уже включена")
                     raise common.ErrTwoFaAlreadyEnabled()
 
                 is_two_fa_verified = self.__verify_two_fa(google_two_fa_code, google_two_fa_key)
                 if not is_two_fa_verified:
+                    self.logger.info("Неверный код 2FA")
                     raise common.ErrTwoFaCodeInvalid()
 
                 await self.account_repo.set_two_fa_key(account_id, google_two_fa_key)
@@ -179,10 +183,12 @@ class AccountService(interface.IAccountService):
             try:
                 account = (await self.account_repo.account_by_id(account_id))[0]
                 if not account.google_two_fa_key:
+                    self.logger.info("2FA не включена")
                     raise common.ErrTwoFaNotEnabled()
 
                 is_two_fa_verified = self.__verify_two_fa(google_two_fa_code, account.google_two_fa_key)
                 if not is_two_fa_verified:
+                    self.logger.info("Неверный код 2FA")
                     raise common.ErrTwoFaCodeInvalid()
 
                 await self.account_repo.delete_two_fa_key(account_id)
@@ -203,6 +209,7 @@ class AccountService(interface.IAccountService):
             try:
                 account = (await self.account_repo.account_by_id(account_id))[0]
                 if not account.google_two_fa_key:
+                    self.logger.info("2FA не включена")
                     raise common.ErrTwoFaNotEnabled()
 
                 is_two_fa_verified = self.__verify_two_fa(google_two_fa_code, account.google_two_fa_key)
@@ -244,6 +251,7 @@ class AccountService(interface.IAccountService):
                 account = (await self.account_repo.account_by_id(account_id))[0]
 
                 if not self.__verify_password(account.password, old_password):
+                    self.logger.info("Неверный старый пароль")
                     raise common.ErrInvalidPassword()
 
                 new_hashed_password = self.__hash_password(new_password)
