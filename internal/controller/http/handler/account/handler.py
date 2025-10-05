@@ -148,7 +148,7 @@ class AccountController(interface.IAccountController):
                 span.set_status(StatusCode.ERROR, str(err))
                 raise err
 
-    async def generate_two_fa(self, request: Request) -> JSONResponse | StreamingResponse:
+    async def generate_two_fa(self, request: Request):
         with self.tracer.start_as_current_span(
                 "AccountController.generate_two_fa",
                 kind=SpanKind.INTERNAL

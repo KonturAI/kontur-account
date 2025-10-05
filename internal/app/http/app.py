@@ -46,7 +46,6 @@ def include_account_handlers(
         account_controller.register,
         methods=["POST"],
         tags=["Account"],
-        response_model=RegisterResponse,
     )
 
     app.add_api_route(
@@ -54,7 +53,6 @@ def include_account_handlers(
         account_controller.register,
         methods=["POST"],
         tags=["Account"],
-        response_model=RegisterResponse,
     )
 
     # Вход пользователя
@@ -63,7 +61,6 @@ def include_account_handlers(
         account_controller.login,
         methods=["POST"],
         tags=["Account"],
-        response_model=LoginResponse,
     )
 
     # Генерация 2FA QR кода
@@ -81,7 +78,6 @@ def include_account_handlers(
         account_controller.set_two_fa,
         methods=["POST"],
         tags=["Account"],
-        response_model=TwoFaResponse,
     )
 
     # Удаление 2FA
@@ -90,7 +86,6 @@ def include_account_handlers(
         account_controller.delete_two_fa,
         methods=["DELETE"],
         tags=["Account"],
-        response_model=TwoFaResponse,
     )
 
     # Верификация 2FA
@@ -99,7 +94,6 @@ def include_account_handlers(
         account_controller.verify_two_fa,
         methods=["POST"],
         tags=["Account"],
-        response_model=VerifyTwoFaResponse,
     )
 
     # Восстановление пароля
@@ -108,7 +102,6 @@ def include_account_handlers(
         account_controller.recovery_password,
         methods=["POST"],
         tags=["Account"],
-        response_model=PasswordResponse,
     )
 
     # Изменение пароля
@@ -117,7 +110,6 @@ def include_account_handlers(
         account_controller.change_password,
         methods=["PUT"],
         tags=["Account"],
-        response_model=PasswordResponse,
     )
 
 
