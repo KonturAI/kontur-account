@@ -1,4 +1,4 @@
-from opentelemetry.trace import Status, StatusCode, SpanKind
+from opentelemetry.trace import StatusCode, SpanKind
 
 from .sql_query import *
 from internal import interface, model, common
@@ -22,7 +22,6 @@ class AccountRepo(interface.IAccountRepo):
                 }
         ) as span:
             try:
-                # Проверяем, существует ли уже аккаунт с таким логином
                 existing_accounts = await self.account_by_login(login)
                 if existing_accounts:
                     raise common.ErrAccountCreate()
@@ -34,11 +33,11 @@ class AccountRepo(interface.IAccountRepo):
 
                 account_id = await self.db.insert(create_account, args)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return account_id
+
             except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+                span.set_status(StatusCode.ERROR, str(err))
                 raise err
 
     async def account_by_id(self, account_id: int) -> list[model.Account]:
@@ -54,11 +53,11 @@ class AccountRepo(interface.IAccountRepo):
                 rows = await self.db.select(get_account_by_id, args)
                 accounts = model.Account.serialize(rows) if rows else []
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return accounts
+
             except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+                span.set_status(StatusCode.ERROR, str(err))
                 raise err
 
     async def account_by_login(self, login: str) -> list[model.Account]:
@@ -74,11 +73,11 @@ class AccountRepo(interface.IAccountRepo):
                 rows = await self.db.select(get_account_by_login, args)
                 accounts = model.Account.serialize(rows) if rows else []
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
                 return accounts
+
             except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+                span.set_status(StatusCode.ERROR, str(err))
                 raise err
 
     async def set_two_fa_key(self, account_id: int, google_two_fa_key: str) -> None:
@@ -95,11 +94,10 @@ class AccountRepo(interface.IAccountRepo):
                     'google_two_fa_key': google_two_fa_key,
                 }
                 await self.db.update(set_two_fa_key, args)
+                span.set_status(StatusCode.OK)
 
-                span.set_status(Status(StatusCode.OK))
             except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+                span.set_status(StatusCode.ERROR, str(err))
                 raise err
 
     async def delete_two_fa_key(self, account_id: int) -> None:
@@ -114,10 +112,9 @@ class AccountRepo(interface.IAccountRepo):
                 args = {'account_id': account_id}
                 await self.db.update(delete_two_fa_key, args)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
             except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+                span.set_status(StatusCode.ERROR, str(err))
                 raise err
 
     async def update_password(self, account_id: int, new_password: str) -> None:
@@ -135,8 +132,7 @@ class AccountRepo(interface.IAccountRepo):
                 }
                 await self.db.update(update_password, args)
 
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(StatusCode.OK)
             except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+                span.set_status(StatusCode.ERROR, str(err))
                 raise err
