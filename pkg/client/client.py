@@ -1,3 +1,5 @@
+from contextvars import ContextVar
+
 import httpx
 import asyncio
 import random
@@ -6,7 +8,7 @@ from pathlib import Path
 from collections import deque
 from datetime import datetime, timedelta
 from typing import Optional, Any, AsyncIterator, Callable
-from tenacity import stop_after_attempt, AsyncRetrying, retry_if_exception_type
+from tenacity import stop_after_attempt, AsyncRetrying, RetryCallState
 
 from opentelemetry import propagate
 
@@ -19,7 +21,7 @@ class CircuitBreaker:
             failure_threshold: int = 5,
             recovery_timeout: int = 60,
             expected_exceptions: tuple[type[Exception], ...] = (httpx.HTTPError,),
-            logger: interface.IOtelLogger = None
+            logger: interface.IOtelLogger = None,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -88,7 +90,7 @@ class CircuitBreaker:
 
             return result
 
-        except self.expected_exceptions as e:
+        except self.expected_exceptions as err:
             await self._record_failure()
             raise
 
@@ -134,6 +136,33 @@ class ExponentialBackoffWithJitter:
         return delay + jitter_value
 
 
+def should_retry_exception(retry_state: RetryCallState) -> bool:
+    if not retry_state.outcome.failed:
+        return False
+
+    exception = retry_state.outcome.exception()
+
+    retryable_exceptions = (
+        httpx.TimeoutException,
+        httpx.ConnectTimeout,
+        httpx.ReadTimeout,
+        httpx.WriteTimeout,
+        httpx.PoolTimeout,
+        httpx.ConnectError,
+        httpx.NetworkError,
+        httpx.RemoteProtocolError,
+        httpx.ProxyError,
+        httpx.TransportError,
+    )
+
+    if isinstance(exception, retryable_exceptions):
+        return True
+
+    if isinstance(exception, httpx.HTTPStatusError):
+        return exception.response.status_code in {502, 503, 504}
+
+    return False
+
 class AsyncHTTPClient:
     _instances: weakref.WeakValueDictionary = weakref.WeakValueDictionary()
     _lock = asyncio.Lock()
@@ -148,10 +177,10 @@ class AsyncHTTPClient:
             use_tracing: bool = False,
             use_http2: bool = True,
             use_https: bool = False,
-            timeout: float = 30,
+            timeout: float = 300,
             max_connections: int = 100,
             max_keepalive_connections: int = 20,
-            retry_count: int = 3,
+            retry_count: int = 0,
             retry_wait_multiplier: float = 0.3,
             retry_wait_min: float = 0.1,
             retry_wait_max: float = 10,
@@ -159,6 +188,7 @@ class AsyncHTTPClient:
             circuit_breaker_failure_threshold: int = 5,
             circuit_breaker_recovery_timeout: int = 60,
             logger: interface.IOtelLogger = None,
+            log_context: ContextVar[dict] = None,
     ):
         protocol = "https" if use_https else "http"
         base_url = f"{protocol}://{host}:{port}{prefix}"
@@ -180,10 +210,10 @@ class AsyncHTTPClient:
             use_tracing: bool = False,
             use_http2: bool = False,
             use_https: bool = False,
-            timeout: float = 30,
+            timeout: float = 300,
             max_connections: int = 100,
             max_keepalive_connections: int = 20,
-            retry_count: int = 3,
+            retry_count: int = 0,
             retry_wait_multiplier: float = 0.3,
             retry_wait_min: float = 0.1,
             retry_wait_max: float = 10,
@@ -191,6 +221,7 @@ class AsyncHTTPClient:
             circuit_breaker_failure_threshold: int = 5,
             circuit_breaker_recovery_timeout: int = 60,
             logger: interface.IOtelLogger = None,
+            log_context: ContextVar[dict] = None,
     ):
         if hasattr(self, "_initialized"):
             return
@@ -228,6 +259,7 @@ class AsyncHTTPClient:
             base_delay=self.retry_wait_min,
             max_delay=self.retry_wait_max
         )
+        self.log_context = log_context
 
     async def _get_session(self) -> httpx.AsyncClient:
         if self.session is None or self.session.is_closed:
@@ -272,7 +304,7 @@ class AsyncHTTPClient:
         return AsyncRetrying(
             stop=stop_after_attempt(self.retry_count),
             wait=self.backoff,
-            retry=retry_if_exception_type(httpx.HTTPError),
+            retry=should_retry_exception,
             reraise=True
         )
 
@@ -286,6 +318,9 @@ class AsyncHTTPClient:
             session = await self._get_session()
 
             headers = {**self.default_headers, **kwargs.pop('headers', {})}
+            if self.log_context:
+                headers.update(self.log_context.get())
+
             cookies = {**self.default_cookies, **kwargs.pop('cookies', {})}
 
             if self.use_tracing:
@@ -312,7 +347,7 @@ class AsyncHTTPClient:
             response.raise_for_status()
             return response
 
-        except Exception as e:
+        except Exception as err:
             raise
 
     async def _request_with_retry(
@@ -331,6 +366,10 @@ class AsyncHTTPClient:
                 retry_count = attempt.retry_state.attempt_number - 1
 
                 if retry_count > 0:
+                    if isinstance(last_exception, httpx.HTTPStatusError):
+                        if last_exception.response.status_code == 500:
+                            return None
+
                     wait_time = self.backoff(attempt.retry_state)
                     self.logger.warning(
                         f"Попытка #{retry_count} для {method} {url}"
@@ -351,8 +390,8 @@ class AsyncHTTPClient:
 
                     return response
 
-                except Exception as e:
-                    last_exception = e
+                except Exception as err:
+                    last_exception = err
                     elapsed = (datetime.now() - start_time).total_seconds()
 
                     if retry_count < self.retry_count - 1:  # Есть еще попытки
@@ -361,14 +400,10 @@ class AsyncHTTPClient:
                             f"Запрос {method} {url} неуспешен "
                             f"(попытка {retry_count + 1}/{self.retry_count}) "
                             f"за {elapsed:.2f}с. Следующая попытка через {next_delay:.2f}с. "
-                            f"Ошибка: {e.__class__.__name__}: {str(e)}"
+                            f"Ошибка: {err.__class__.__name__}: {str(err)}"
                         )
                     else:
-                        self.logger.error(
-                            f"Запрос {method} {url} окончательно провален "
-                            f"после {retry_count + 1} попыток за {elapsed:.2f}с. "
-                            f"Ошибка: {e.__class__.__name__}: {str(e)}"
-                        )
+                        raise err
 
                     raise
         return None
@@ -401,7 +436,7 @@ class AsyncHTTPClient:
                 response.raise_for_status()
                 async for chunk in response.aiter_bytes(chunk_size):
                     yield chunk
-        except Exception as e:
+        except Exception as err:
             raise
 
     async def download_file(
@@ -431,7 +466,7 @@ class AsyncHTTPClient:
                         if progress_callback:
                             progress_callback(downloaded, total)
 
-        except Exception as e:
+        except Exception as err:
             if file_path.exists():
                 file_path.unlink()
             raise
