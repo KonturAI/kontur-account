@@ -48,13 +48,10 @@ class IHttpMiddleware(Protocol):
     def trace_middleware01(self, app: FastAPI): pass
 
     @abstractmethod
-    def metrics_middleware02(self, app: FastAPI): pass
+    def logger_middleware02(self, app: FastAPI): pass
 
     @abstractmethod
-    def logger_middleware03(self, app: FastAPI): pass
-
-    @abstractmethod
-    def authorization_middleware04(self, app: FastAPI): pass
+    def authorization_middleware03(self, app: FastAPI): pass
 
 
 class IRedis(Protocol):

@@ -29,9 +29,8 @@ def include_middleware(
         app: FastAPI,
         http_middleware: interface.IHttpMiddleware,
 ):
-    http_middleware.authorization_middleware04(app)
-    http_middleware.logger_middleware03(app)
-    http_middleware.metrics_middleware02(app)
+    http_middleware.authorization_middleware03(app)
+    http_middleware.logger_middleware02(app)
     http_middleware.trace_middleware01(app)
 
 

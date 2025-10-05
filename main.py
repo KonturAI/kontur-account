@@ -1,3 +1,5 @@
+from contextvars import ContextVar
+
 import uvicorn
 
 from infrastructure.pg.pg import PG
@@ -19,6 +21,8 @@ from internal.config.config import Config
 
 cfg = Config()
 
+log_context: ContextVar[dict] = ContextVar('log_context', default={})
+
 alert_manager = AlertManager(
     cfg.alert_tg_bot_token,
     cfg.service_name,
@@ -39,6 +43,7 @@ tel = Telemetry(
     cfg.service_version,
     cfg.otlp_host,
     cfg.otlp_port,
+    log_context,
     alert_manager
 )
 
@@ -50,6 +55,7 @@ loom_authorization_client = LoomAuthorizationClient(
     tel=tel,
     host=cfg.loom_authorization_host,
     port=cfg.loom_authorization_port,
+    log_context=log_context,
 )
 
 # Инициализация репозиториев
@@ -63,12 +69,11 @@ account_service = AccountService(
     password_secret_key=cfg.password_secret_key
 )
 
-
 # Инициализация контроллеров
 account_controller = AccountController(tel, account_service)
 
 # Инициализация middleware
-http_middleware = HttpMiddleware(tel, loom_authorization_client, cfg.prefix)
+http_middleware = HttpMiddleware(tel, loom_authorization_client, cfg.prefix, log_context)
 
 if __name__ == "__main__":
     app = NewHTTP(
