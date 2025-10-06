@@ -1,5 +1,7 @@
 from contextvars import ContextVar
 
+from opentelemetry.trace import SpanKind
+
 from internal import model
 from internal import interface
 from pkg.client.client import AsyncHTTPClient
@@ -25,7 +27,7 @@ class LoomAuthorizationClient(interface.ILoomAuthorizationClient):
         )
         self.tracer = tel.tracer()
 
-    @traced_method()
+    @traced_method(SpanKind.CLIENT)
     async def authorization(
             self,
             account_id: int,
@@ -42,7 +44,7 @@ class LoomAuthorizationClient(interface.ILoomAuthorizationClient):
 
         return model.JWTTokens(**json_response)
 
-    @traced_method()
+    @traced_method(SpanKind.CLIENT)
     async def authorization_tg(
             self,
             account_id: int,
@@ -59,7 +61,7 @@ class LoomAuthorizationClient(interface.ILoomAuthorizationClient):
 
         return model.JWTTokens(**json_response)
 
-    @traced_method()
+    @traced_method(SpanKind.CLIENT)
     async def check_authorization(self, access_token: str) -> model.AuthorizationData:
         cookies = {"Access-Token": access_token}
         response = await self.client.get("/check", cookies=cookies)
