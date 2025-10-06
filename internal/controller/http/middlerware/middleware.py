@@ -144,6 +144,12 @@ class HttpMiddleware(interface.IHttpMiddleware):
                     kind=SpanKind.INTERNAL,
             ) as span:
                 try:
+                    if "login" in request.url.path or "register" in request.url.path:
+                        response = await call_next(request)
+
+                        span.set_status(StatusCode.OK)
+                        return response
+
                     access_token = request.cookies.get("Access-Token")
                     if not access_token:
                         authorization_data = model.AuthorizationData(
