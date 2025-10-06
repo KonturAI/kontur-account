@@ -1,10 +1,9 @@
 from contextvars import ContextVar
 
-from opentelemetry.trace import Status, StatusCode, SpanKind
-
 from internal import model
 from internal import interface
 from pkg.client.client import AsyncHTTPClient
+from pkg.trace_wrapper import traced_method
 
 
 class LoomAuthorizationClient(interface.ILoomAuthorizationClient):
@@ -26,77 +25,44 @@ class LoomAuthorizationClient(interface.ILoomAuthorizationClient):
         )
         self.tracer = tel.tracer()
 
+    @traced_method()
     async def authorization(
             self,
             account_id: int,
             two_fa_status: bool,
             role: str
     ) -> model.JWTTokens:
-        with self.tracer.start_as_current_span(
-                "LoomAuthorizationClient.authorization",
-                kind=SpanKind.CLIENT,
-                attributes={
-                    "account_id": account_id
-                }
-        ) as span:
-            try:
-                body = {
-                    "account_id": account_id,
-                    "two_fa_status": two_fa_status,
-                    "role": role
-                }
-                response = await self.client.post("", json=body)
-                json_response = response.json()
+        body = {
+            "account_id": account_id,
+            "two_fa_status": two_fa_status,
+            "role": role
+        }
+        response = await self.client.post("", json=body)
+        json_response = response.json()
 
-                span.set_status(StatusCode.OK)
-                return model.JWTTokens(**json_response)
-            except Exception as e:
-                
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
+        return model.JWTTokens(**json_response)
 
+    @traced_method()
     async def authorization_tg(
             self,
             account_id: int,
             two_fa_status: bool,
             role: str
     ) -> model.JWTTokens:
-        with self.tracer.start_as_current_span(
-                "LoomAuthorizationClient.authorization_tg",
-                kind=SpanKind.CLIENT,
-                attributes={
-                    "account_id": account_id
-                }
-        ) as span:
-            try:
-                body = {
-                    "account_id": account_id,
-                    "two_fa_status": two_fa_status,
-                    "role": role
-                }
-                response = await self.client.post("/tg", json=body)
-                json_response = response.json()
+        body = {
+            "account_id": account_id,
+            "two_fa_status": two_fa_status,
+            "role": role
+        }
+        response = await self.client.post("/tg", json=body)
+        json_response = response.json()
 
-                span.set_status(StatusCode.OK)
-                return model.JWTTokens(**json_response)
-            except Exception as e:
-                
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
+        return model.JWTTokens(**json_response)
 
+    @traced_method()
     async def check_authorization(self, access_token: str) -> model.AuthorizationData:
-        with self.tracer.start_as_current_span(
-                "LoomAuthorizationClient.check_authorization",
-                kind=SpanKind.CLIENT,
-        ) as span:
-            try:
-                cookies = {"Access-Token": access_token}
-                response = await self.client.get("/check", cookies=cookies)
-                json_response = response.json()
+        cookies = {"Access-Token": access_token}
+        response = await self.client.get("/check", cookies=cookies)
+        json_response = response.json()
 
-                span.set_status(StatusCode.OK)
-                return model.AuthorizationData(**json_response)
-            except Exception as e:
-                
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
+        return model.AuthorizationData(**json_response)
