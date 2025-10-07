@@ -41,6 +41,7 @@ class PG(interface.IDB):
     async def insert(self, query: str, query_params: dict) -> int:
         async with self.pool() as session:
             result = await session.execute(text(query), query_params)
+            await session.commit()
             rows = result.all()
             return rows[0][0]
 
@@ -57,7 +58,6 @@ class PG(interface.IDB):
     async def select(self, query: str, query_params: dict) -> Sequence[Any]:
         async with self.pool() as session:
             result = await session.execute(text(query), query_params)
-            await session.commit()
             rows = result.all()
             return rows
 
