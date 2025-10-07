@@ -6,6 +6,7 @@ from internal.controller.http.handler.account.model import (
     RegisterBody, LoginBody, SetTwoFaBody, DeleteTwoFaBody,
     VerifyTwoFaBody, RecoveryPasswordBody, ChangePasswordBody
 )
+from pkg.log_wrapper import auto_log
 from pkg.trace_wrapper import traced_method
 
 
@@ -19,16 +20,13 @@ class AccountController(interface.IAccountController):
         self.logger = tel.logger()
         self.account_service = account_service
 
+    @auto_log()
     @traced_method()
     async def register(self, body: RegisterBody) -> JSONResponse:
-        self.logger.info("регистрация")
-
         authorization_data = await self.account_service.register(
             login=body.login,
             password=body.password
         )
-
-        self.logger.info("регистрация успешна")
 
         response = JSONResponse(
             status_code=201,
@@ -52,16 +50,13 @@ class AccountController(interface.IAccountController):
 
         return response
 
+    @auto_log()
     @traced_method()
     async def register_from_tg(self, body: RegisterBody) -> JSONResponse:
-        self.logger.info("регистрация из тг")
-
         authorization_data = await self.account_service.register_from_tg(
             login=body.login,
             password=body.password
         )
-
-        self.logger.info("регистрация из тг успешна")
 
         response = JSONResponse(
             status_code=201,
@@ -85,16 +80,14 @@ class AccountController(interface.IAccountController):
 
         return response
 
+    @auto_log()
     @traced_method()
     async def login(self, body: LoginBody) -> JSONResponse:
-        self.logger.info("вход")
-
         authorization_data = await self.account_service.login(
             login=body.login,
             password=body.password
         )
 
-        self.logger.info("вход успешен")
 
         response = JSONResponse(
             status_code=200,
@@ -118,6 +111,7 @@ class AccountController(interface.IAccountController):
 
         return response
 
+    @auto_log()
     @traced_method()
     async def generate_two_fa(self, request: Request):
         authorization_data = request.state.authorization_data
@@ -128,12 +122,7 @@ class AccountController(interface.IAccountController):
                 status_code=403,
                 content={}
             )
-
-        self.logger.info("генерация 2fa")
-
         two_fa_key, qr_image = await self.account_service.generate_two_fa_key(account_id)
-
-        self.logger.info("генерация 2fa успешна")
 
         def iterfile():
             try:
@@ -156,6 +145,7 @@ class AccountController(interface.IAccountController):
 
         return response
 
+    @auto_log()
     @traced_method()
     async def set_two_fa(self, request: Request, body: SetTwoFaBody) -> JSONResponse:
         authorization_data = request.state.authorization_data
@@ -167,18 +157,14 @@ class AccountController(interface.IAccountController):
                 content={}
             )
 
-        self.logger.info("установка 2fa")
-
         await self.account_service.set_two_fa_key(
             account_id=account_id,
             google_two_fa_key=body.google_two_fa_key,
             google_two_fa_code=body.google_two_fa_code
         )
-
-        self.logger.info("установка 2fa успешна")
-
         return JSONResponse(status_code=200, content={})
 
+    @auto_log()
     @traced_method()
     async def delete_two_fa(self, request: Request, body: DeleteTwoFaBody) -> JSONResponse:
         authorization_data = request.state.authorization_data
@@ -190,17 +176,14 @@ class AccountController(interface.IAccountController):
                 content={}
             )
 
-        self.logger.info("удаление 2fa")
-
         await self.account_service.delete_two_fa_key(
             account_id=account_id,
             google_two_fa_code=body.google_two_fa_code
         )
 
-        self.logger.info("удаление 2fa успешно")
-
         return JSONResponse(status_code=200, content={})
 
+    @auto_log()
     @traced_method()
     async def verify_two_fa(self, request: Request, body: VerifyTwoFaBody) -> JSONResponse:
         authorization_data = request.state.authorization_data
@@ -212,20 +195,17 @@ class AccountController(interface.IAccountController):
                 content={}
             )
 
-        self.logger.info("проверка 2fa")
-
         is_valid = await self.account_service.verify_two(
             account_id=account_id,
             google_two_fa_code=body.google_two_fa_code
         )
-
-        self.logger.info("проверка 2fa успешна")
 
         return JSONResponse(
             status_code=200,
             content={"is_valid": is_valid}
         )
 
+    @auto_log()
     @traced_method()
     async def recovery_password(self, request: Request, body: RecoveryPasswordBody) -> JSONResponse:
         authorization_data = request.state.authorization_data
@@ -237,17 +217,14 @@ class AccountController(interface.IAccountController):
                 content={}
             )
 
-        self.logger.info("восстановление пароля")
-
         await self.account_service.recovery_password(
             account_id=account_id,
             new_password=body.new_password
         )
 
-        self.logger.info("восстановление пароля успешно")
-
         return JSONResponse(status_code=200, content={})
 
+    @auto_log()
     @traced_method()
     async def change_password(self, request: Request, body: ChangePasswordBody) -> JSONResponse:
         authorization_data = request.state.authorization_data
@@ -259,14 +236,10 @@ class AccountController(interface.IAccountController):
                 content={}
             )
 
-        self.logger.info("смена пароля")
-
         await self.account_service.change_password(
             account_id=account_id,
             new_password=body.new_password,
             old_password=body.old_password
         )
-
-        self.logger.info("смена пароля успешна")
 
         return JSONResponse(status_code=200, content={})
