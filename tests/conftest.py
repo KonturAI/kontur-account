@@ -3,71 +3,9 @@ from contextvars import ContextVar
 
 from internal import interface
 
-# ============================================================================
-# FACTORIES - для создания тестовых данных
-# ============================================================================
-
-@pytest.fixture
-def account_factory():
-    from tests.factories.account_factory import AccountFactory
-    return AccountFactory
-
-
-@pytest.fixture
-def account_with_2fa_factory():
-    from tests.factories.account_factory import AccountWithTwoFAFactory
-    return AccountWithTwoFAFactory
-
-
-@pytest.fixture
-def jwt_tokens_factory():
-    from tests.factories.auth_factory import JWTTokensFactory
-    return JWTTokensFactory
-
-
-@pytest.fixture
-def authorization_data_factory():
-    from tests.factories.auth_factory import AuthorizationDataFactory
-    return AuthorizationDataFactory
-
-
-@pytest.fixture
-def authorization_data_dto_factory():
-    from tests.factories.auth_factory import AuthorizationDataDTOFactory
-    return AuthorizationDataDTOFactory
-
 
 # ============================================================================
-# ГОТОВЫЕ ДАННЫЕ - готовые экземпляры для быстрого использования
-# ============================================================================
-
-@pytest.fixture
-def account(account_factory):
-    return account_factory()
-
-
-@pytest.fixture
-def account_with_2fa(account_with_2fa_factory):
-    return account_with_2fa_factory()
-
-
-@pytest.fixture
-def jwt_tokens(jwt_tokens_factory):
-    return jwt_tokens_factory()
-
-
-@pytest.fixture
-def authorization_data(authorization_data_factory):
-    return authorization_data_factory()
-
-
-@pytest.fixture
-def authorization_data_dto(authorization_data_dto_factory):
-    return authorization_data_dto_factory()
-
-
-# ============================================================================
-# БАЗОВЫЕ МОКИ - используем pytest-mock
+# БАЗОВЫЕ МОКИ для unit-тестов
 # ============================================================================
 
 @pytest.fixture
@@ -118,8 +56,23 @@ def log_context() -> ContextVar[dict]:
 # ============================================================================
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "unit: Unit tests (быстрые, с моками)")
-    config.addinivalue_line("markers", "integration: Integration tests (медленные, с реальными компонентами)")
-    config.addinivalue_line("markers", "api: API integration tests")
-    config.addinivalue_line("markers", "repo: Repository integration tests (testcontainers)")
-    config.addinivalue_line("markers", "client: Client integration tests (respx)")
+    config.addinivalue_line(
+        "markers",
+        "unit: Unit tests (fast, isolated, with mocks)"
+    )
+    config.addinivalue_line(
+        "markers",
+        "integration: Integration tests (slower, with real components)"
+    )
+    config.addinivalue_line(
+        "markers",
+        "api: API integration tests (full HTTP stack)"
+    )
+    config.addinivalue_line(
+        "markers",
+        "repo: Repository integration tests (requires database)"
+    )
+    config.addinivalue_line(
+        "markers",
+        "client: Client integration tests (HTTP client tests with respx)"
+    )

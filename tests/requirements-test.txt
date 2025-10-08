@@ -1,18 +1,21 @@
-# Основные тестовые зависимости
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 pytest-mock>=3.12.0
 
-# HTTP мокирование
+pytest-cov>=4.1.0
+coverage[toml]>=7.4.0
+
+pytest-xdist>=3.5.0
+
 httpx>=0.28.0
 respx>=0.21.0
 
-# Testcontainers для интеграционных тестов БД
 testcontainers[postgresql]>=3.7.0
 
-# Фабрики и фейковые данные
 factory-boy>=3.3.0
 faker>=22.0.0
 
-# Дополнительные утилиты
-freezegun>=1.4.0  # Для мокирования времени
+freezegun>=1.4.0
+
+pytest-timeout>=2.2.0
+pytest-sugar>=1.0.0

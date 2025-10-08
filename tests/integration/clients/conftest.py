@@ -12,9 +12,9 @@ def respx_mock():
 
 
 @pytest.fixture
-def loom_authorization_client(mock_telemetry, log_context):
+def loom_authorization_client(tel, log_context):
     return LoomAuthorizationClient(
-        tel=mock_telemetry,
+        tel=tel,
         host="localhost",
         port=8080,
         log_context=log_context
@@ -23,7 +23,10 @@ def loom_authorization_client(mock_telemetry, log_context):
 
 @pytest.fixture
 def mock_authorization_response():
-    def _create_response(access_token: str = "test_access", refresh_token: str = "test_refresh"):
+    def _create_response(
+        access_token: str = "test_access",
+        refresh_token: str = "test_refresh"
+    ) -> Response:
         return Response(
             status_code=200,
             json={
@@ -40,7 +43,7 @@ def mock_check_authorization_response():
         account_id: int = 1,
         two_fa_status: bool = False,
         role: str = "employee"
-    ):
+    ) -> Response:
         return Response(
             status_code=200,
             json={

@@ -1,10 +1,30 @@
 import pytest
 from testcontainers.postgres import PostgresContainer
+import asyncio
 
 from infrastructure.pg.pg import PG
+from infrastructure.telemetry.telemetry import Telemetry
+from internal.migration.manager import MigrationManager
+
+from internal.config.config import Config
 from internal.repo.account.repo import AccountRepo
 
 
+@pytest.fixture(scope="session")
+def tel(log_context):
+    cfg = Config()
+
+    _tel = Telemetry(
+        cfg.log_level,
+        cfg.root_path,
+        cfg.environment,
+        cfg.service_name,
+        cfg.service_version,
+        cfg.otlp_host,
+        cfg.otlp_port,
+        log_context,
+    )
+    return _tel
 
 @pytest.fixture(scope="session")
 def postgres_container():
@@ -12,10 +32,10 @@ def postgres_container():
         yield postgres
 
 
-@pytest.fixture
-async def test_db(postgres_container, mock_telemetry):
+@pytest.fixture(scope="session")
+def _db(postgres_container, tel):
     db = PG(
-        tel=mock_telemetry,
+        tel=tel,
         db_user=postgres_container.username,
         db_pass=postgres_container.password,
         db_host=postgres_container.get_container_host_ip(),
@@ -23,20 +43,25 @@ async def test_db(postgres_container, mock_telemetry):
         db_name=postgres_container.dbname
     )
 
-    # Запуск миграций
-    from internal.migration.manager import MigrationManager
-    migration_manager = MigrationManager(db)
-    await migration_manager.migrate()
+    async def run_migrations():
+        migration_manager = MigrationManager(db)
+        await migration_manager.migrate()
+
+    asyncio.run(run_migrations())
 
     yield db
 
-    # Очистка после теста
-    # Можно добавить cleanup логику если нужно
+
+@pytest.fixture(scope="function")
+async def test_db(_db):
+    yield _db
+
+    await _db.delete("TRUNCATE TABLE accounts RESTART IDENTITY CASCADE", {})
 
 
-@pytest.fixture
-async def test_account_repo(test_db, mock_telemetry):
+@pytest.fixture(scope="session")
+async def test_account_repo(test_db, tel):
     return AccountRepo(
-        tel=mock_telemetry,
+        tel=tel,
         db=test_db
     )

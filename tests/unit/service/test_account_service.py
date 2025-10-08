@@ -1,14 +1,8 @@
 import pytest
 import io
 from unittest.mock import AsyncMock
-from tests.utils.helpers import (
-    setup_account_repo_find_by_login,
-    setup_account_repo_create,
-    setup_loom_auth_client_authorization,
-    hash_password
-)
-from tests.utils.assertions import assert_authorization_dto
 
+from tests import utils
 from internal import common
 
 
@@ -17,12 +11,12 @@ class TestAccountServiceRegister:
     """Тесты для метода register сервиса AccountService"""
 
     async def test_register_success(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        jwt_tokens,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            jwt_tokens,
+            password_secret
     ):
         """Успешная регистрация нового пользователя"""
         # Arrange
@@ -30,14 +24,14 @@ class TestAccountServiceRegister:
         password = "secure_password"
         expected_account_id = 42
 
-        setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
-        setup_loom_auth_client_authorization(mock_client=mock_loom_authorization_client, tokens=jwt_tokens)
+        utils.setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
+        utils.setup_loom_auth_client_authorization(mock_client=mock_loom_authorization_client, tokens=jwt_tokens)
 
         # Act
         result = await account_service.register(login, password)
 
         # Assert
-        assert_authorization_dto(result, account_id=expected_account_id)
+        utils.assert_authorization_dto(result, account_id=expected_account_id)
         assert result.access_token == jwt_tokens.access_token
         assert result.refresh_token == jwt_tokens.refresh_token
 
@@ -54,19 +48,19 @@ class TestAccountServiceRegister:
         )
 
     async def test_register_password_is_hashed(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            password_secret
     ):
         """Пароль хешируется перед сохранением"""
         # Arrange
         login = "user"
         plain_password = "my_password"
 
-        setup_account_repo_create(mock_account_repo, account_id=1)
-        setup_loom_auth_client_authorization(mock_loom_authorization_client)
+        utils.setup_account_repo_create(mock_account_repo, account_id=1)
+        utils.setup_loom_auth_client_authorization(mock_loom_authorization_client)
 
         # Act
         await account_service.register(login, plain_password)
@@ -79,17 +73,17 @@ class TestAccountServiceRegister:
         assert len(saved_password) > len(plain_password), "Hashed password should be longer"
 
     async def test_register_calls_authorization_with_correct_params(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        jwt_tokens
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            jwt_tokens
     ):
         """Вызывает authorization клиента с правильными параметрами"""
         # Arrange
         account_id = 123
-        setup_account_repo_create(mock_account_repo, account_id=account_id)
-        setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
+        utils.setup_account_repo_create(mock_account_repo, account_id=account_id)
+        utils.setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
 
         # Act
         await account_service.register("user", "password")
@@ -102,10 +96,10 @@ class TestAccountServiceRegister:
         )
 
     async def test_register_returns_correct_authorization_dto(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client
     ):
         """Возвращает корректный AuthorizationDataDTO"""
         # Arrange
@@ -113,8 +107,8 @@ class TestAccountServiceRegister:
         expected_access_token = "access_xyz"
         expected_refresh_token = "refresh_abc"
 
-        setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
-        setup_loom_auth_client_authorization(
+        utils.setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
+        utils.setup_loom_auth_client_authorization(
             mock_loom_authorization_client,
             access_token=expected_access_token,
             refresh_token=expected_refresh_token
@@ -134,11 +128,11 @@ class TestAccountServiceRegisterFromTg:
     """Тесты для метода register_from_tg сервиса AccountService"""
 
     async def test_register_from_tg_success(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        jwt_tokens
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            jwt_tokens
     ):
         """Успешная регистрация через Telegram"""
         # Arrange
@@ -146,14 +140,14 @@ class TestAccountServiceRegisterFromTg:
         password = "tg_password"
         expected_account_id = 10
 
-        setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
+        utils.setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
         mock_loom_authorization_client.authorization_tg = AsyncMock(return_value=jwt_tokens)
 
         # Act
         result = await account_service.register_from_tg(login, password)
 
         # Assert
-        assert_authorization_dto(result, account_id=expected_account_id)
+        utils.assert_authorization_dto(result, account_id=expected_account_id)
         assert result.access_token == jwt_tokens.access_token
         assert result.refresh_token == jwt_tokens.refresh_token
 
@@ -165,17 +159,17 @@ class TestAccountServiceRegisterFromTg:
         )
 
     async def test_register_from_tg_hashes_password(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        jwt_tokens
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            jwt_tokens
     ):
         """Хеширует пароль при регистрации через TG"""
         # Arrange
         plain_password = "plain_tg_password"
 
-        setup_account_repo_create(mock_account_repo, account_id=1)
+        utils.setup_account_repo_create(mock_account_repo, account_id=1)
         mock_loom_authorization_client.authorization_tg = AsyncMock(return_value=jwt_tokens)
 
         # Act
@@ -187,16 +181,16 @@ class TestAccountServiceRegisterFromTg:
         assert saved_password != plain_password, "Password must be hashed"
 
     async def test_register_from_tg_calls_authorization_tg_method(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        jwt_tokens
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            jwt_tokens
     ):
         """Вызывает authorization_tg вместо authorization"""
         # Arrange
         account_id = 55
-        setup_account_repo_create(mock_account_repo, account_id=account_id)
+        utils.setup_account_repo_create(mock_account_repo, account_id=account_id)
         mock_loom_authorization_client.authorization_tg = AsyncMock(return_value=jwt_tokens)
 
         # Act
@@ -212,18 +206,18 @@ class TestAccountServiceLogin:
     """Тесты для метода login сервиса AccountService"""
 
     async def test_login_success(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        account_factory,
-        jwt_tokens,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            account_factory,
+            jwt_tokens,
+            password_secret
     ):
         """Успешный логин с правильным паролем"""
         # Arrange
         plain_password = "correct_password"
-        hashed = hash_password(plain_password, password_secret)
+        hashed = utils.hash_password(plain_password, password_secret)
 
         test_account = account_factory(
             login="test_user",
@@ -231,72 +225,72 @@ class TestAccountServiceLogin:
             google_two_fa_key=""
         )
 
-        setup_account_repo_find_by_login(mock_account_repo, account=test_account)
-        setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
+        utils.setup_account_repo_find_by_login(mock_account_repo, account=test_account)
+        utils.setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
 
         # Act
         result = await account_service.login(test_account.login, plain_password)
 
         # Assert
         assert result is not None
-        assert_authorization_dto(result, account_id=test_account.id)
+        utils.assert_authorization_dto(result, account_id=test_account.id)
         assert result.access_token == jwt_tokens.access_token
 
     async def test_login_account_not_found_raises_error(
-        self,
-        account_service,
-        mock_account_repo
+            self,
+            account_service,
+            mock_account_repo
     ):
         """Логин с несуществующим аккаунтом выбрасывает ошибку"""
         # Arrange
-        setup_account_repo_find_by_login(mock_account_repo, not_found=True)
+        utils.setup_account_repo_find_by_login(mock_account_repo, not_found=True)
 
         # Act & Assert
         with pytest.raises(common.ErrAccountNotFound):
             await account_service.login("nonexistent", "password")
 
     async def test_login_invalid_password_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory,
+            password_secret
     ):
         """Логин с неверным паролем выбрасывает ошибку"""
         # Arrange
         correct_password = "correct"
         wrong_password = "wrong"
 
-        hashed = hash_password(correct_password, password_secret)
+        hashed = utils.hash_password(correct_password, password_secret)
         test_account = account_factory(password=hashed)
 
-        setup_account_repo_find_by_login(mock_account_repo, account=test_account)
+        utils.setup_account_repo_find_by_login(mock_account_repo, account=test_account)
 
         # Act & Assert
         with pytest.raises(common.ErrInvalidPassword):
             await account_service.login(test_account.login, wrong_password)
 
     async def test_login_with_2fa_sets_two_fa_status_true(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        account_factory,
-        jwt_tokens,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            account_factory,
+            jwt_tokens,
+            password_secret
     ):
         """Логин с включенной 2FA передает two_fa_status=True"""
         # Arrange
         plain_password = "password"
-        hashed = hash_password(plain_password, password_secret)
+        hashed = utils.hash_password(plain_password, password_secret)
 
         test_account = account_factory(
             password=hashed,
             google_two_fa_key="SOME2FAKEY"
         )
 
-        setup_account_repo_find_by_login(mock_account_repo, account=test_account)
-        setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
+        utils.setup_account_repo_find_by_login(mock_account_repo, account=test_account)
+        utils.setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
 
         # Act
         await account_service.login(test_account.login, plain_password)
@@ -309,26 +303,26 @@ class TestAccountServiceLogin:
         )
 
     async def test_login_without_2fa_sets_two_fa_status_false(
-        self,
-        account_service,
-        mock_account_repo,
-        mock_loom_authorization_client,
-        account_factory,
-        jwt_tokens,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            mock_loom_authorization_client,
+            account_factory,
+            jwt_tokens,
+            password_secret
     ):
         """Логин без 2FA передает two_fa_status=False"""
         # Arrange
         plain_password = "password"
-        hashed = hash_password(plain_password, password_secret)
+        hashed = utils.hash_password(plain_password, password_secret)
 
         test_account = account_factory(
             password=hashed,
             google_two_fa_key=""
         )
 
-        setup_account_repo_find_by_login(mock_account_repo, account=test_account)
-        setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
+        utils.setup_account_repo_find_by_login(mock_account_repo, account=test_account)
+        utils.setup_loom_auth_client_authorization(mock_loom_authorization_client, tokens=jwt_tokens)
 
         # Act
         await account_service.login(test_account.login, plain_password)
@@ -346,8 +340,8 @@ class TestAccountServiceGenerateTwoFaKey:
     """Тесты для метода generate_two_fa_key сервиса AccountService"""
 
     async def test_generate_two_fa_key_returns_tuple(
-        self,
-        account_service
+            self,
+            account_service
     ):
         """Генерирует 2FA ключ и QR-код"""
         # Arrange
@@ -366,8 +360,8 @@ class TestAccountServiceGenerateTwoFaKey:
         assert isinstance(qr_image, io.BytesIO)
 
     async def test_generate_two_fa_key_returns_valid_base32_key(
-        self,
-        account_service
+            self,
+            account_service
     ):
         """Генерирует валидный Base32 ключ"""
         # Arrange
@@ -382,8 +376,8 @@ class TestAccountServiceGenerateTwoFaKey:
         assert re.match(r'^[A-Z2-7]+$', two_fa_key)
 
     async def test_generate_two_fa_key_returns_qr_code_image(
-        self,
-        account_service
+            self,
+            account_service
     ):
         """Генерирует QR-код в виде изображения"""
         # Arrange
@@ -400,8 +394,8 @@ class TestAccountServiceGenerateTwoFaKey:
         assert image_data[:8] == b'\x89PNG\r\n\x1a\n'
 
     async def test_generate_two_fa_key_generates_unique_keys(
-        self,
-        account_service
+            self,
+            account_service
     ):
         """Генерирует уникальные ключи при каждом вызове"""
         # Arrange
@@ -420,10 +414,10 @@ class TestAccountServiceSetTwoFaKey:
     """Тесты для метода set_two_fa_key сервиса AccountService"""
 
     async def test_set_two_fa_key_success(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Успешная установка 2FA ключа"""
         # Arrange
@@ -447,10 +441,10 @@ class TestAccountServiceSetTwoFaKey:
         mock_account_repo.set_two_fa_key.assert_called_once_with(account_id, two_fa_key)
 
     async def test_set_two_fa_key_already_enabled_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Установка 2FA когда уже включена выбрасывает ошибку"""
         # Arrange
@@ -465,10 +459,10 @@ class TestAccountServiceSetTwoFaKey:
         mock_account_repo.set_two_fa_key.assert_not_called()
 
     async def test_set_two_fa_key_invalid_code_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Установка 2FA с неверным кодом выбрасывает ошибку"""
         # Arrange
@@ -486,10 +480,10 @@ class TestAccountServiceSetTwoFaKey:
         mock_account_repo.set_two_fa_key.assert_not_called()
 
     async def test_set_two_fa_key_verifies_code_before_setting(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Проверяет код перед установкой ключа"""
         # Arrange
@@ -517,10 +511,10 @@ class TestAccountServiceDeleteTwoFaKey:
     """Тесты для метода delete_two_fa_key сервиса AccountService"""
 
     async def test_delete_two_fa_key_success(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Успешное удаление 2FA ключа"""
         # Arrange
@@ -543,10 +537,10 @@ class TestAccountServiceDeleteTwoFaKey:
         mock_account_repo.delete_two_fa_key.assert_called_once_with(account_id)
 
     async def test_delete_two_fa_key_not_enabled_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Удаление 2FA когда она не включена выбрасывает ошибку"""
         # Arrange
@@ -561,10 +555,10 @@ class TestAccountServiceDeleteTwoFaKey:
         mock_account_repo.delete_two_fa_key.assert_not_called()
 
     async def test_delete_two_fa_key_invalid_code_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Удаление 2FA с неверным кодом выбрасывает ошибку"""
         # Arrange
@@ -582,10 +576,10 @@ class TestAccountServiceDeleteTwoFaKey:
         mock_account_repo.delete_two_fa_key.assert_not_called()
 
     async def test_delete_two_fa_key_verifies_code_before_deleting(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Проверяет код перед удалением ключа"""
         # Arrange
@@ -613,10 +607,10 @@ class TestAccountServiceVerifyTwo:
     """Тесты для метода verify_two сервиса AccountService"""
 
     async def test_verify_two_success_valid_code(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Верификация с валидным кодом возвращает True"""
         # Arrange
@@ -638,10 +632,10 @@ class TestAccountServiceVerifyTwo:
         mock_account_repo.account_by_id.assert_called_once_with(account_id)
 
     async def test_verify_two_success_invalid_code(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Верификация с невалидным кодом возвращает False"""
         # Arrange
@@ -659,10 +653,10 @@ class TestAccountServiceVerifyTwo:
         assert result is False
 
     async def test_verify_two_not_enabled_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Верификация когда 2FA не включена выбрасывает ошибку"""
         # Arrange
@@ -675,10 +669,10 @@ class TestAccountServiceVerifyTwo:
             await account_service.verify_two(account_id, "123456")
 
     async def test_verify_two_gets_account_from_repo(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory
     ):
         """Получает аккаунт из репозитория при верификации"""
         # Arrange
@@ -704,9 +698,9 @@ class TestAccountServiceRecoveryPassword:
     """Тесты для метода recovery_password сервиса AccountService"""
 
     async def test_recovery_password_success(
-        self,
-        account_service,
-        mock_account_repo
+            self,
+            account_service,
+            mock_account_repo
     ):
         """Успешное восстановление пароля"""
         # Arrange
@@ -726,9 +720,9 @@ class TestAccountServiceRecoveryPassword:
         assert saved_password != new_password, "Password should be hashed"
 
     async def test_recovery_password_hashes_new_password(
-        self,
-        account_service,
-        mock_account_repo
+            self,
+            account_service,
+            mock_account_repo
     ):
         """Новый пароль хешируется перед сохранением"""
         # Arrange
@@ -747,9 +741,9 @@ class TestAccountServiceRecoveryPassword:
         assert len(saved_password) > len(plain_password)
 
     async def test_recovery_password_calls_update_password(
-        self,
-        account_service,
-        mock_account_repo
+            self,
+            account_service,
+            mock_account_repo
     ):
         """Вызывает update_password репозитория"""
         # Arrange
@@ -769,11 +763,11 @@ class TestAccountServiceChangePassword:
     """Тесты для метода change_password сервиса AccountService"""
 
     async def test_change_password_success(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory,
+            password_secret
     ):
         """Успешная смена пароля"""
         # Arrange
@@ -781,7 +775,7 @@ class TestAccountServiceChangePassword:
         old_password = "old_password"
         new_password = "new_password"
 
-        hashed_old = hash_password(old_password, password_secret)
+        hashed_old = utils.hash_password(old_password, password_secret)
         test_account = account_factory(id=account_id, password=hashed_old)
 
         mock_account_repo.account_by_id = AsyncMock(return_value=[test_account])
@@ -795,11 +789,11 @@ class TestAccountServiceChangePassword:
         mock_account_repo.update_password.assert_called_once()
 
     async def test_change_password_invalid_old_password_raises_error(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory,
+            password_secret
     ):
         """Смена пароля с неверным старым паролем выбрасывает ошибку"""
         # Arrange
@@ -808,7 +802,7 @@ class TestAccountServiceChangePassword:
         wrong_old_password = "wrong_old"
         new_password = "new_password"
 
-        hashed_old = hash_password(correct_old_password, password_secret)
+        hashed_old = utils.hash_password(correct_old_password, password_secret)
         test_account = account_factory(id=account_id, password=hashed_old)
 
         mock_account_repo.account_by_id = AsyncMock(return_value=[test_account])
@@ -820,11 +814,11 @@ class TestAccountServiceChangePassword:
         mock_account_repo.update_password.assert_not_called()
 
     async def test_change_password_hashes_new_password(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory,
+            password_secret
     ):
         """Новый пароль хешируется перед сохранением"""
         # Arrange
@@ -832,7 +826,7 @@ class TestAccountServiceChangePassword:
         old_password = "old_password"
         new_password = "new_password"
 
-        hashed_old = hash_password(old_password, password_secret)
+        hashed_old = utils.hash_password(old_password, password_secret)
         test_account = account_factory(id=account_id, password=hashed_old)
 
         mock_account_repo.account_by_id = AsyncMock(return_value=[test_account])
@@ -849,11 +843,11 @@ class TestAccountServiceChangePassword:
         assert saved_password != hashed_old
 
     async def test_change_password_verifies_old_password_first(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory,
+            password_secret
     ):
         """Проверяет старый пароль перед изменением"""
         # Arrange
@@ -861,7 +855,7 @@ class TestAccountServiceChangePassword:
         old_password = "old_password"
         new_password = "new_password"
 
-        hashed_old = hash_password(old_password, password_secret)
+        hashed_old = utils.hash_password(old_password, password_secret)
         test_account = account_factory(id=account_id, password=hashed_old)
 
         mock_account_repo.account_by_id = AsyncMock(return_value=[test_account])
@@ -875,11 +869,11 @@ class TestAccountServiceChangePassword:
         mock_account_repo.update_password.assert_called_once()
 
     async def test_change_password_gets_account_from_repo(
-        self,
-        account_service,
-        mock_account_repo,
-        account_factory,
-        password_secret
+            self,
+            account_service,
+            mock_account_repo,
+            account_factory,
+            password_secret
     ):
         """Получает аккаунт из репозитория для проверки старого пароля"""
         # Arrange
@@ -887,7 +881,7 @@ class TestAccountServiceChangePassword:
         old_password = "old_password"
         new_password = "new_password"
 
-        hashed_old = hash_password(old_password, password_secret)
+        hashed_old = utils.hash_password(old_password, password_secret)
         test_account = account_factory(id=account_id, password=hashed_old)
 
         mock_account_repo.account_by_id = AsyncMock(return_value=[test_account])

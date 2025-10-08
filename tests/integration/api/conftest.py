@@ -8,35 +8,40 @@ from internal.service.account.service import AccountService
 
 
 @pytest.fixture
+def test_password_secret() -> str:
+    return "test_api_secret_key"
+
+
+@pytest.fixture
 def test_client(
-    mock_db,
-    mock_telemetry,
-    mock_account_repo,
+    test_db,
+    tel,
+    test_account_repo,
     mock_loom_authorization_client,
     test_password_secret,
     log_context
 ):
     account_service = AccountService(
-        tel=mock_telemetry,
-        account_repo=mock_account_repo,
+        tel=tel,
+        account_repo=test_account_repo,
         loom_authorization_client=mock_loom_authorization_client,
         password_secret_key=test_password_secret
     )
 
     account_controller = AccountController(
-        tel=mock_telemetry,
+        tel=tel,
         account_service=account_service
     )
 
     http_middleware = HttpMiddleware(
-        tel=mock_telemetry,
+        tel=tel,
         loom_authorization_client=mock_loom_authorization_client,
         prefix="/api/account",
         log_context=log_context
     )
 
     app = NewHTTP(
-        db=mock_db,
+        db=test_db,
         account_controller=account_controller,
         http_middleware=http_middleware,
         prefix="/api/account"
