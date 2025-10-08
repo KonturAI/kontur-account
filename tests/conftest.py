@@ -1,6 +1,7 @@
 import pytest
 from contextvars import ContextVar
 
+from internal import interface
 from tests.mocks.telemetry_mock import MockTelemetry
 
 # ============================================================================
@@ -77,20 +78,17 @@ def mock_telemetry():
 
 @pytest.fixture
 def mock_db(mocker):
-    from internal.interface import IDB
-    return mocker.AsyncMock(spec=IDB)
+    return mocker.AsyncMock(spec=interface.IDB)
 
 
 @pytest.fixture
 def mock_account_repo(mocker):
-    from internal.interface import IAccountRepo
-    return mocker.AsyncMock(spec=IAccountRepo)
+    return mocker.AsyncMock(spec=interface.IAccountRepo)
 
 
 @pytest.fixture
 def mock_loom_authorization_client(mocker):
-    from internal.interface.client.loom_authorization import ILoomAuthorizationClient
-    return mocker.AsyncMock(spec=ILoomAuthorizationClient)
+    return mocker.AsyncMock(spec=interface.ILoomAuthorizationClient)
 
 
 # ============================================================================
@@ -98,14 +96,12 @@ def mock_loom_authorization_client(mocker):
 # ============================================================================
 
 @pytest.fixture
-def password_secret():
-    """Секретный ключ для хеширования паролей в тестах."""
+def password_secret() -> str:
     return "test_secret_key_for_testing"
 
 
 @pytest.fixture
-def log_context():
-    """Context var для логов."""
+def log_context() -> ContextVar[dict]:
     return ContextVar('log_context', default={})
 
 
@@ -114,7 +110,6 @@ def log_context():
 # ============================================================================
 
 def pytest_configure(config):
-    """Регистрация кастомных маркеров."""
     config.addinivalue_line("markers", "unit: Unit tests (быстрые, с моками)")
     config.addinivalue_line("markers", "integration: Integration tests (медленные, с реальными компонентами)")
     config.addinivalue_line("markers", "api: API integration tests")

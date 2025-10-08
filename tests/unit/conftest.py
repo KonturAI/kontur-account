@@ -3,15 +3,15 @@ from internal import interface
 
 
 @pytest.fixture
-def mock_account_service(mocker) -> interface.IAccountService:
+def mock_account_service(mocker):
     return mocker.AsyncMock(spec=interface.IAccountService)
 
 
 @pytest.fixture
 def account_controller(
-        mock_telemetry: interface.ITelemetry,
-        mock_account_service: interface.IAccountService
-) -> interface.IAccountController:
+        mock_telemetry,
+        mock_account_service
+):
     from internal.controller.http.handler.account.handler import AccountController
     return AccountController(
         tel=mock_telemetry,
@@ -25,9 +25,9 @@ def account_controller(
 
 @pytest.fixture
 def account_service(
-        mock_telemetry: interface.ITelemetry,
-        mock_account_repo: interface.IAccountRepo,
-        mock_loom_authorization_client: interface.ILoomAuthorizationClient,
+        mock_telemetry,
+        mock_account_repo,
+        mock_loom_authorization_client,
         password_secret: str
 ):
     from internal.service.account.service import AccountService
@@ -45,9 +45,9 @@ def account_service(
 
 @pytest.fixture
 def account_repo(
-        mock_telemetry: interface.ITelemetry,
-        mock_db: interface.IDB
-) -> interface.IAccountRepo:
+        mock_telemetry,
+        mock_db
+):
     from internal.repo.account.repo import AccountRepo
     return AccountRepo(
         tel=mock_telemetry,

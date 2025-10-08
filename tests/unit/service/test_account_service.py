@@ -25,7 +25,6 @@ class TestAccountServiceRegister:
         password = "secure_password"
         expected_account_id = 42
 
-        # Setup mocks
         setup_account_repo_find_by_login(mock_account_repo, not_found=True)
         setup_account_repo_create(mock_account_repo, account_id=expected_account_id)
         setup_loom_auth_client_authorization(mock_client=mock_loom_authorization_client, tokens=jwt_tokens)
@@ -38,16 +37,13 @@ class TestAccountServiceRegister:
         assert result.access_token == jwt_tokens.access_token
         assert result.refresh_token == jwt_tokens.refresh_token
 
-        # Verify repo calls
         mock_account_repo.account_by_login.assert_called_once_with(login=login)
         mock_account_repo.create_account.assert_called_once()
 
-        # Verify password was hashed
         call_args = mock_account_repo.create_account.call_args
         hashed_password = call_args.kwargs["password"]
         assert hashed_password != password, "Password should be hashed"
 
-        # Verify authorization client call
         mock_loom_authorization_client.authorization.assert_called_once_with(
             account_id=expected_account_id,
             two_fa_status=False,
@@ -64,14 +60,12 @@ class TestAccountServiceRegister:
         existing_login = account.login
         password = "password"
 
-        # Setup: account already exists
         setup_account_repo_find_by_login(mock_account_repo, account=account)
 
         # Act & Assert
         with pytest.raises(common.ErrAccountCreate):
             await account_service.register(existing_login, password)
 
-        # Verify create was NOT called
         mock_account_repo.create_account.assert_not_called()
 
     async def test_register_password_is_hashed(
@@ -115,11 +109,11 @@ class TestAccountServiceRegister:
         # Act
         await account_service.register("user", "password")
 
-        # Assert - verify authorization call
+        # Assert
         mock_loom_authorization_client.authorization.assert_called_once_with(
             account_id=account_id,
-            two_fa_status=False,  # New users don't have 2FA
-            role="employee"       # Default role
+            two_fa_status=False,
+            role="employee"
         )
 
 
@@ -138,11 +132,10 @@ class TestAccountServiceLogin:
         plain_password = "correct_password"
         hashed = hash_password(plain_password, password_secret)
 
-        # Create account with hashed password
         test_account = account_factory(
             login="test_user",
             password=hashed,
-            google_two_fa_key=""  # No 2FA
+            google_two_fa_key=""
         )
 
         setup_account_repo_find_by_login(mock_account_repo, account=test_account)

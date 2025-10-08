@@ -1,4 +1,3 @@
-from unittest.mock import AsyncMock, Mock
 from internal import model
 
 
@@ -14,20 +13,3 @@ def assert_authorization_dto(
         assert dto.account_id == account_id, (
             f"Account ID: {dto.account_id} != {account_id}"
         )
-
-
-# ============================================================================
-# MOCK ASSERTIONS
-# ============================================================================
-
-def assert_mock_call_count(mock: Mock | AsyncMock, expected_count: int) -> None:
-    """
-    Проверить количество вызовов мока.
-
-    Пример:
-        assert_mock_call_count(mock_repo.create_account, 2)
-    """
-    actual_count = mock.call_count
-    assert actual_count == expected_count, (
-        f"Expected {expected_count} calls, got {actual_count}"
-    )

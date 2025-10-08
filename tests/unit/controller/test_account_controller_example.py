@@ -37,6 +37,10 @@ class TestAccountControllerRegister:
         )
 
 
-    async def test_register_sets_cookies(self, account_controller, mock_account_service):
+    async def test_register_sets_cookies(
+            self,
+            account_controller: interface.IAccountController,
+            mock_account_service: interface.IAccountService
+    ):
         # TODO: Реализовать тест
         pass
