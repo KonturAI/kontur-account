@@ -1,40 +1,59 @@
 import pytest
+from internal import interface
 
-from internal.service.account.service import AccountService
-from internal.repo.account.repo import AccountRepo
-from internal.controller.http.handler.account.handler import AccountController
+
+@pytest.fixture
+def mock_account_service(mocker) -> interface.IAccountService:
+    return mocker.AsyncMock(spec=interface.IAccountService)
+
+
+@pytest.fixture
+def account_controller(
+        mock_telemetry: interface.ITelemetry,
+        mock_account_service: interface.IAccountService
+) -> interface.IAccountController:
+    from internal.controller.http.handler.account.handler import AccountController
+    return AccountController(
+        tel=mock_telemetry,
+        account_service=mock_account_service
+    )
+
+
+# ============================================================================
+# SERVICE LAYER - мокируем repo + clients
+# ============================================================================
 
 @pytest.fixture
 def account_service(
-    mock_telemetry,
-    mock_account_repo,
-    mock_loom_authorization_client,
-    test_password_secret
+        mock_telemetry: interface.ITelemetry,
+        mock_account_repo: interface.IAccountRepo,
+        mock_loom_authorization_client: interface.ILoomAuthorizationClient,
+        password_secret: str
 ):
+    from internal.service.account.service import AccountService
     return AccountService(
         tel=mock_telemetry,
         account_repo=mock_account_repo,
         loom_authorization_client=mock_loom_authorization_client,
-        password_secret_key=test_password_secret
+        password_secret_key=password_secret
     )
 
 
+# ============================================================================
+# REPOSITORY LAYER - мокируем DB
+# ============================================================================
+
 @pytest.fixture
-def account_repo(mock_telemetry, mock_db):
+def account_repo(
+        mock_telemetry: interface.ITelemetry,
+        mock_db: interface.IDB
+) -> interface.IAccountRepo:
+    from internal.repo.account.repo import AccountRepo
     return AccountRepo(
         tel=mock_telemetry,
         db=mock_db
     )
 
-@pytest.fixture
-def mock_account_service(mocker):
-    from internal.interface import IAccountService
-    return mocker.MagicMock(spec=IAccountService)
-
-
-@pytest.fixture
-def account_controller(mock_telemetry, mock_account_service):
-    return AccountController(
-        tel=mock_telemetry,
-        account_service=mock_account_service
-    )
+# ============================================================================
+# CONTROLLER LAYER - мокируем services
+# ============================================================================

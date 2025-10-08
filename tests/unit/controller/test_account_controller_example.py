@@ -1,15 +1,16 @@
 import pytest
 from unittest.mock import AsyncMock
-from internal import model
+
 from internal.controller.http.handler.account.model import RegisterBody
+from internal import interface, model
 
 
 @pytest.mark.unit
 class TestAccountControllerRegister:
     async def test_register_success(
         self,
-        account_controller,
-        mock_account_service
+        account_controller: interface.IAccountController,
+        mock_account_service: interface.IAccountService
     ):
         # Arrange
         body = RegisterBody(login="test_user", password="test_password")
@@ -27,7 +28,7 @@ class TestAccountControllerRegister:
 
         # Assert
         assert response.status_code == 201
-        assert response.body  # Проверяем наличие body
+        assert response.body
 
         # Проверяем, что сервис был вызван с правильными параметрами
         mock_account_service.register.assert_called_once_with(
