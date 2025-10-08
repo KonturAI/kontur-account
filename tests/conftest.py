@@ -2,7 +2,6 @@ import pytest
 from contextvars import ContextVar
 
 from internal import interface
-from tests.mocks.telemetry_mock import MockTelemetry
 
 # ============================================================================
 # FACTORIES - для создания тестовых данных
@@ -72,8 +71,17 @@ def authorization_data_dto(authorization_data_dto_factory):
 # ============================================================================
 
 @pytest.fixture
-def mock_telemetry():
-    return MockTelemetry()
+def mock_telemetry(mocker):
+    mock_logger = mocker.MagicMock(spec=interface.IOtelLogger)
+    mock_tracer = mocker.MagicMock()
+    mock_meter = mocker.MagicMock()
+
+    mock_tel = mocker.MagicMock(spec=interface.ITelemetry)
+    mock_tel.logger.return_value = mock_logger
+    mock_tel.tracer.return_value = mock_tracer
+    mock_tel.meter.return_value = mock_meter
+
+    return mock_tel
 
 
 @pytest.fixture
