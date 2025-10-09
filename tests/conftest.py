@@ -2,6 +2,7 @@ import pytest
 from contextvars import ContextVar
 
 from internal import interface
+from tests.factories import AccountFactory
 
 
 TEST_PASSWORD_SECRET = "test_secret_key_for_testing"
@@ -14,6 +15,12 @@ def reset_log_context(log_context):
         log_context.set({})
     except LookupError:
         pass
+
+
+@pytest.fixture(autouse=True)
+def reset_factory_counter():
+    AccountFactory.reset_counter()
+    yield
 
 
 @pytest.fixture(scope="session")

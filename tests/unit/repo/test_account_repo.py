@@ -13,7 +13,6 @@ from tests.factories import AccountFactory
 
 
 class TestAccountRepoCreateAccount:
-    @pytest.mark.asyncio
     async def test_create_account_success(self, account_repo, mock_db):
         # Arrange
         login = "test_user"
@@ -40,7 +39,6 @@ class TestAccountRepoCreateAccount:
             {'login': login, 'password': password}
         )
 
-    @pytest.mark.asyncio
     async def test_create_account_duplicate_login(self, account_repo, mock_db):
         # Arrange
         login = "existing_user"
@@ -62,11 +60,10 @@ class TestAccountRepoCreateAccount:
         )
         mock_db.insert.assert_not_called()
 
-    @pytest.mark.asyncio
     @pytest.mark.parametrize("login,password", [
-        ("", "hashed_password"),
-        ("user", ""),
-        ("", ""),
+        pytest.param("", "hashed_password", id="empty_login"),
+        pytest.param("user", "", id="empty_password"),
+        pytest.param("", "", id="both_empty"),
     ])
     async def test_create_account_empty_credentials(
         self, account_repo, mock_db, login, password
@@ -87,14 +84,13 @@ class TestAccountRepoCreateAccount:
             {'login': login, 'password': password}
         )
 
-    @pytest.mark.asyncio
     async def test_create_account_select_returns_none(self, account_repo, mock_db):
         # Arrange
         login = "test_user"
         password = "hashed_password"
         expected_account_id = 42
 
-        mock_db.select.return_value = None
+        mock_db.select.return_value = []
         mock_db.insert.return_value = expected_account_id
 
         # Act
@@ -105,7 +101,6 @@ class TestAccountRepoCreateAccount:
 
 
 class TestAccountRepoCreateAccountErrorHandling:
-    @pytest.mark.asyncio
     async def test_create_account_select_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.select.side_effect = Exception("Database connection lost")
@@ -117,7 +112,6 @@ class TestAccountRepoCreateAccountErrorHandling:
         assert "Database connection lost" in str(exc_info.value)
         mock_db.insert.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_create_account_insert_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.select.return_value = []
@@ -131,7 +125,6 @@ class TestAccountRepoCreateAccountErrorHandling:
 
 
 class TestAccountRepoAccountById:
-    @pytest.mark.asyncio
     async def test_account_by_id_found(self, account_repo, mock_db):
         # Arrange
         account_id = 123
@@ -157,7 +150,6 @@ class TestAccountRepoAccountById:
             {'account_id': account_id}
         )
 
-    @pytest.mark.asyncio
     async def test_account_by_id_not_found(self, account_repo, mock_db):
         # Arrange
         account_id = 999
@@ -173,11 +165,10 @@ class TestAccountRepoAccountById:
             {'account_id': account_id}
         )
 
-    @pytest.mark.asyncio
     async def test_account_by_id_none_result(self, account_repo, mock_db):
         # Arrange
         account_id = 456
-        mock_db.select.return_value = None
+        mock_db.select.return_value = []
 
         # Act
         result = await account_repo.account_by_id(account_id)
@@ -189,7 +180,6 @@ class TestAccountRepoAccountById:
             {'account_id': account_id}
         )
 
-    @pytest.mark.asyncio
     async def test_account_by_id_multiple_results(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -203,7 +193,6 @@ class TestAccountRepoAccountById:
         # Assert
         assert len(result) == 2
 
-    @pytest.mark.asyncio
     async def test_account_by_id_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.select.side_effect = Exception("Database timeout")
@@ -216,7 +205,6 @@ class TestAccountRepoAccountById:
 
 
 class TestAccountRepoAccountByLogin:
-    @pytest.mark.asyncio
     async def test_account_by_login_found(self, account_repo, mock_db):
         # Arrange
         login = "test_user"
@@ -236,7 +224,6 @@ class TestAccountRepoAccountByLogin:
             {'login': login}
         )
 
-    @pytest.mark.asyncio
     async def test_account_by_login_not_found(self, account_repo, mock_db):
         # Arrange
         login = "nonexistent_user"
@@ -252,11 +239,10 @@ class TestAccountRepoAccountByLogin:
             {'login': login}
         )
 
-    @pytest.mark.asyncio
     async def test_account_by_login_none_result(self, account_repo, mock_db):
         # Arrange
         login = "test_user"
-        mock_db.select.return_value = None
+        mock_db.select.return_value = []
 
         # Act
         result = await account_repo.account_by_login(login)
@@ -264,8 +250,13 @@ class TestAccountRepoAccountByLogin:
         # Assert
         assert result == []
 
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("login", ["", "  ", "test_user", "Test_User", "TEST_USER"])
+    @pytest.mark.parametrize("login", [
+        pytest.param("", id="empty"),
+        pytest.param("  ", id="whitespace"),
+        pytest.param("test_user", id="lowercase"),
+        pytest.param("Test_User", id="mixed_case"),
+        pytest.param("TEST_USER", id="uppercase"),
+    ])
     async def test_account_by_login_various_formats(self, account_repo, mock_db, login):
         # Arrange
         expected_account = AccountFactory.create(login=login)
@@ -282,7 +273,6 @@ class TestAccountRepoAccountByLogin:
             {'login': login}
         )
 
-    @pytest.mark.asyncio
     async def test_account_by_login_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.select.side_effect = Exception("Connection refused")
@@ -295,7 +285,6 @@ class TestAccountRepoAccountByLogin:
 
 
 class TestAccountRepoSetTwoFaKey:
-    @pytest.mark.asyncio
     async def test_set_two_fa_key_success(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -315,7 +304,6 @@ class TestAccountRepoSetTwoFaKey:
             }
         )
 
-    @pytest.mark.asyncio
     async def test_set_two_fa_key_empty_key(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -335,7 +323,6 @@ class TestAccountRepoSetTwoFaKey:
             }
         )
 
-    @pytest.mark.asyncio
     async def test_set_two_fa_key_overwrite_existing(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -349,7 +336,6 @@ class TestAccountRepoSetTwoFaKey:
         # Assert
         mock_db.update.assert_called_once()
 
-    @pytest.mark.asyncio
     async def test_set_two_fa_key_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.update.side_effect = Exception("Update failed")
@@ -362,7 +348,6 @@ class TestAccountRepoSetTwoFaKey:
 
 
 class TestAccountRepoDeleteTwoFaKey:
-    @pytest.mark.asyncio
     async def test_delete_two_fa_key_success(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -378,7 +363,6 @@ class TestAccountRepoDeleteTwoFaKey:
             {'account_id': account_id}
         )
 
-    @pytest.mark.asyncio
     async def test_delete_two_fa_key_idempotent(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -391,7 +375,6 @@ class TestAccountRepoDeleteTwoFaKey:
         # Assert
         assert mock_db.update.call_count == 2
 
-    @pytest.mark.asyncio
     async def test_delete_two_fa_key_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.update.side_effect = Exception("Deadlock detected")
@@ -404,7 +387,6 @@ class TestAccountRepoDeleteTwoFaKey:
 
 
 class TestAccountRepoUpdatePassword:
-    @pytest.mark.asyncio
     async def test_update_password_success(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -424,7 +406,6 @@ class TestAccountRepoUpdatePassword:
             }
         )
 
-    @pytest.mark.asyncio
     async def test_update_password_same_password(self, account_repo, mock_db):
         # Arrange
         account_id = 100
@@ -438,12 +419,11 @@ class TestAccountRepoUpdatePassword:
         # Assert
         mock_db.update.assert_called_once()
 
-    @pytest.mark.asyncio
     @pytest.mark.parametrize("password", [
-        "",
-        "a" * 1000,
-        "pass with spaces",
-        "пароль",
+        pytest.param("", id="empty"),
+        pytest.param("a" * 1000, id="very_long"),
+        pytest.param("pass with spaces", id="with_spaces"),
+        pytest.param("пароль", id="unicode"),
     ])
     async def test_update_password_edge_cases(
         self, account_repo, mock_db, password
@@ -464,7 +444,6 @@ class TestAccountRepoUpdatePassword:
             }
         )
 
-    @pytest.mark.asyncio
     async def test_update_password_db_error(self, account_repo, mock_db):
         # Arrange
         mock_db.update.side_effect = Exception("Connection lost")
@@ -476,8 +455,7 @@ class TestAccountRepoUpdatePassword:
         assert "Connection lost" in str(exc_info.value)
 
 
-class TestAccountRepoIntegration:
-    @pytest.mark.asyncio
+class TestAccountRepoLifecycle:
     async def test_full_account_lifecycle(self, account_repo, mock_db):
         # Create account
         login = "lifecycle_user"
