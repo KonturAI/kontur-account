@@ -5,27 +5,23 @@ from internal.app.http.app import NewHTTP
 from internal.controller.http.handler.account.handler import AccountController
 from internal.controller.http.middlerware.middleware import HttpMiddleware
 from internal.service.account.service import AccountService
-
-
-@pytest.fixture
-def test_password_secret() -> str:
-    return "test_api_secret_key"
+from tests.conftest import TEST_PASSWORD_SECRET
 
 
 @pytest.fixture
 def test_client(
     test_db,
     tel,
-    test_account_repo,
+    account_repo,
     mock_loom_authorization_client,
-    test_password_secret,
+    password_secret,
     log_context
 ):
     account_service = AccountService(
         tel=tel,
-        account_repo=test_account_repo,
+        account_repo=account_repo,
         loom_authorization_client=mock_loom_authorization_client,
-        password_secret_key=test_password_secret
+        password_secret_key=password_secret
     )
 
     account_controller = AccountController(
@@ -53,5 +49,6 @@ def test_client(
 @pytest.fixture
 def api_headers():
     return {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }

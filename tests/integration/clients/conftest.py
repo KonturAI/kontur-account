@@ -5,10 +5,10 @@ from httpx import Response
 from pkg.client.internal.loom_authorization.client import LoomAuthorizationClient
 
 
-@pytest.fixture
-def respx_mock():
+@pytest.fixture(autouse=True)
+def enable_respx():
     with respx.mock:
-        yield respx
+        yield
 
 
 @pytest.fixture
@@ -24,8 +24,8 @@ def loom_authorization_client(tel, log_context):
 @pytest.fixture
 def mock_authorization_response():
     def _create_response(
-        access_token: str = "test_access",
-        refresh_token: str = "test_refresh"
+        access_token: str = "test_access_token",
+        refresh_token: str = "test_refresh_token"
     ) -> Response:
         return Response(
             status_code=200,
@@ -40,7 +40,7 @@ def mock_authorization_response():
 @pytest.fixture
 def mock_check_authorization_response():
     def _create_response(
-        account_id: int = 1,
+        account_id: int = 10001,
         two_fa_status: bool = False,
         role: str = "employee"
     ) -> Response:

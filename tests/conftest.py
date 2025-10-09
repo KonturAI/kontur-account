@@ -4,12 +4,30 @@ from contextvars import ContextVar
 from internal import interface
 
 
-# ============================================================================
-# БАЗОВЫЕ МОКИ для unit-тестов
-# ============================================================================
+TEST_PASSWORD_SECRET = "test_secret_key_for_testing"
+
+
+@pytest.fixture(autouse=True)
+def reset_log_context(log_context):
+    yield
+    try:
+        log_context.set({})
+    except LookupError:
+        pass
+
+
+@pytest.fixture(scope="session")
+def log_context() -> ContextVar[dict]:
+    return ContextVar('log_context', default={})
+
 
 @pytest.fixture
-def mock_telemetry(mocker):
+def password_secret() -> str:
+    return TEST_PASSWORD_SECRET
+
+
+@pytest.fixture
+def mock_tel(mocker):
     mock_logger = mocker.MagicMock(spec=interface.IOtelLogger)
     mock_tracer = mocker.MagicMock()
     mock_meter = mocker.MagicMock()
@@ -35,44 +53,3 @@ def mock_account_repo(mocker):
 @pytest.fixture
 def mock_loom_authorization_client(mocker):
     return mocker.AsyncMock(spec=interface.ILoomAuthorizationClient)
-
-
-# ============================================================================
-# КОНСТАНТЫ И КОНФИГУРАЦИЯ
-# ============================================================================
-
-@pytest.fixture
-def password_secret() -> str:
-    return "test_secret_key_for_testing"
-
-
-@pytest.fixture
-def log_context() -> ContextVar[dict]:
-    return ContextVar('log_context', default={})
-
-
-# ============================================================================
-# PYTEST КОНФИГУРАЦИЯ
-# ============================================================================
-
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers",
-        "unit: Unit tests (fast, isolated, with mocks)"
-    )
-    config.addinivalue_line(
-        "markers",
-        "integration: Integration tests (slower, with real components)"
-    )
-    config.addinivalue_line(
-        "markers",
-        "api: API integration tests (full HTTP stack)"
-    )
-    config.addinivalue_line(
-        "markers",
-        "repo: Repository integration tests (requires database)"
-    )
-    config.addinivalue_line(
-        "markers",
-        "client: Client integration tests (HTTP client tests with respx)"
-    )

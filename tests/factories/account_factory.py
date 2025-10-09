@@ -1,6 +1,7 @@
 import factory
-from factory import Faker, Trait
-from datetime import datetime
+from factory import Faker, Trait, LazyAttribute
+from datetime import datetime, timezone
+
 from internal import model
 
 
@@ -8,23 +9,22 @@ class AccountFactory(factory.Factory):
     class Meta:
         model = model.Account
 
-    id = factory.Sequence(lambda n: n + 1)
+    id = factory.Sequence(lambda n: n + 10000)
     login = Faker("user_name")
-    password = Faker("password", length=20)
+    password = Faker("password", length=60)
     google_two_fa_key = ""
-    created_at = factory.LazyFunction(datetime.now)
+    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
 
     class Params:
         with_2fa = Trait(
-            google_two_fa_key=Faker("pystr", max_chars=32)
+            google_two_fa_key=Faker("pystr", min_chars=32, max_chars=32)
         )
 
 
 class AccountWithTwoFAFactory(AccountFactory):
-    google_two_fa_key = Faker("pystr", max_chars=32)
+    google_two_fa_key = Faker("pystr", min_chars=32, max_chars=32)
 
 
-# Convenience functions для частых сценариев
 def create_account(**kwargs) -> model.Account:
     return AccountFactory(**kwargs)
 

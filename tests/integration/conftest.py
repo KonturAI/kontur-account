@@ -5,16 +5,27 @@ import asyncio
 from infrastructure.pg.pg import PG
 from infrastructure.telemetry.telemetry import Telemetry
 from internal.migration.manager import MigrationManager
-
 from internal.config.config import Config
 from internal.repo.account.repo import AccountRepo
 
 
 @pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+def postgres_container():
+    with PostgresContainer("postgres:16") as postgres:
+        yield postgres
+
+
+@pytest.fixture(scope="session")
 def tel(log_context):
     cfg = Config()
-
-    _tel = Telemetry(
+    return Telemetry(
         cfg.log_level,
         cfg.root_path,
         cfg.environment,
@@ -24,16 +35,10 @@ def tel(log_context):
         cfg.otlp_port,
         log_context,
     )
-    return _tel
-
-@pytest.fixture(scope="session")
-def postgres_container():
-    with PostgresContainer("postgres:16") as postgres:
-        yield postgres
 
 
 @pytest.fixture(scope="session")
-def _db(postgres_container, tel):
+def session_db(postgres_container, tel):
     db = PG(
         tel=tel,
         db_user=postgres_container.username,
@@ -49,18 +54,18 @@ def _db(postgres_container, tel):
 
     asyncio.run(run_migrations())
 
-    yield db
+    return db
 
 
-@pytest.fixture(scope="function")
-async def test_db(_db):
-    yield _db
+@pytest.fixture
+async def test_db(session_db):
+    yield session_db
 
-    await _db.delete("TRUNCATE TABLE accounts RESTART IDENTITY CASCADE", {})
+    await session_db.delete("TRUNCATE TABLE accounts RESTART IDENTITY CASCADE", {})
 
 
-@pytest.fixture(scope="session")
-async def test_account_repo(test_db, tel):
+@pytest.fixture
+def account_repo(tel, test_db):
     return AccountRepo(
         tel=tel,
         db=test_db
