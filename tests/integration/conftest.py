@@ -38,7 +38,7 @@ def tel(log_context):
 
 
 @pytest.fixture(scope="session")
-def session_db(postgres_container, tel):
+def init_db(postgres_container, tel):
     db = PG(
         tel=tel,
         db_user=postgres_container.username,
@@ -58,10 +58,10 @@ def session_db(postgres_container, tel):
 
 
 @pytest.fixture
-async def test_db(session_db):
-    yield session_db
+async def db(init_db):
+    yield init_db
 
-    await session_db.delete("TRUNCATE TABLE accounts RESTART IDENTITY CASCADE", {})
+    await init_db.delete("TRUNCATE TABLE accounts RESTART IDENTITY CASCADE", {})
 
 
 @pytest.fixture

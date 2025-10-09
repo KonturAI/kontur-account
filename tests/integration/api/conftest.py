@@ -44,11 +44,3 @@ def test_client(
     )
 
     return TestClient(app)
-
-
-@pytest.fixture
-def api_headers():
-    return {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }

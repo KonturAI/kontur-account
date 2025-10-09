@@ -1,6 +1,5 @@
 import pytest
 import respx
-from httpx import Response
 
 from pkg.client.internal.loom_authorization.client import LoomAuthorizationClient
 
@@ -19,39 +18,3 @@ def loom_authorization_client(tel, log_context):
         port=8080,
         log_context=log_context
     )
-
-
-@pytest.fixture
-def mock_authorization_response():
-    def _create_response(
-        access_token: str = "test_access_token",
-        refresh_token: str = "test_refresh_token"
-    ) -> Response:
-        return Response(
-            status_code=200,
-            json={
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            }
-        )
-    return _create_response
-
-
-@pytest.fixture
-def mock_check_authorization_response():
-    def _create_response(
-        account_id: int = 10001,
-        two_fa_status: bool = False,
-        role: str = "employee"
-    ) -> Response:
-        return Response(
-            status_code=200,
-            json={
-                "account_id": account_id,
-                "two_fa_status": two_fa_status,
-                "role": role,
-                "message": "OK",
-                "status_code": 200
-            }
-        )
-    return _create_response
