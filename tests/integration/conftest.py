@@ -65,8 +65,8 @@ async def db(init_db):
 
 
 @pytest.fixture
-def account_repo(tel, test_db):
+def account_repo(tel, db):
     return AccountRepo(
         tel=tel,
-        db=test_db
+        db=db
     )

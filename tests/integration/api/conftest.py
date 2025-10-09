@@ -10,7 +10,7 @@ from tests.conftest import TEST_PASSWORD_SECRET
 
 @pytest.fixture
 def test_client(
-    test_db,
+    db,
     tel,
     account_repo,
     mock_loom_authorization_client,
@@ -37,7 +37,7 @@ def test_client(
     )
 
     app = NewHTTP(
-        db=test_db,
+        db=db,
         account_controller=account_controller,
         http_middleware=http_middleware,
         prefix="/api/account"
