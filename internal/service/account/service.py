@@ -1,10 +1,10 @@
+import io
+
 import bcrypt
 import pyotp
 import qrcode
-import io
 
-from internal import interface, model, common
-
+from internal import common, interface, model
 from pkg.trace_wrapper import traced_method
 
 

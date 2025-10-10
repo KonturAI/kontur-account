@@ -1,12 +1,18 @@
 import io
 from abc import abstractmethod
 from typing import Protocol
+
 from fastapi import Request
 
 from internal import model
 from internal.controller.http.handler.account.model import (
-    RegisterBody, LoginBody, SetTwoFaBody, DeleteTwoFaBody,
-    VerifyTwoFaBody, RecoveryPasswordBody, ChangePasswordBody
+    ChangePasswordBody,
+    DeleteTwoFaBody,
+    LoginBody,
+    RecoveryPasswordBody,
+    RegisterBody,
+    SetTwoFaBody,
+    VerifyTwoFaBody,
 )
 
 

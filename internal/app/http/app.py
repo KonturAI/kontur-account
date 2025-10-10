@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-
 from starlette.responses import StreamingResponse
 
-from internal import model, interface
+from internal import interface, model
 from internal.controller.http.handler.account.model import *
 
 

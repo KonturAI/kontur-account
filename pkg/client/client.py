@@ -1,15 +1,15 @@
+from collections.abc import Callable
 from contextvars import ContextVar
 from datetime import datetime, timedelta
-from typing import Optional, Callable
 
 import httpx
+from opentelemetry import propagate
 from tenacity import (
-    stop_after_attempt,
     AsyncRetrying,
     RetryCallState,
+    stop_after_attempt,
     wait_exponential,
 )
-from opentelemetry import propagate
 
 from internal import interface
 
@@ -19,14 +19,14 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        logger: Optional[interface.IOtelLogger] = None,
+        logger: interface.IOtelLogger | None = None,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.logger = logger
 
         self._failure_count = 0
-        self._last_failure_time: Optional[datetime] = None
+        self._last_failure_time: datetime | None = None
         self._state = "closed"  # closed, open, half-open
 
     @property
@@ -67,7 +67,7 @@ class CircuitBreaker:
             self._failure_count = 0
             return result
 
-        except Exception as err:
+        except Exception:
             self._record_failure()
             raise
 
@@ -125,8 +125,8 @@ class AsyncHTTPClient:
         host: str,
         port: int,
         prefix: str = "",
-        headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
+        headers: dict | None = None,
+        cookies: dict | None = None,
         use_tracing: bool = False,
         use_https: bool = False,
         use_http2: bool = False,
@@ -139,8 +139,8 @@ class AsyncHTTPClient:
         circuit_breaker_enabled: bool = False,
         circuit_breaker_threshold: int = 5,
         circuit_breaker_timeout: int = 60,
-        logger: Optional[interface.IOtelLogger] = None,
-        log_context: Optional[ContextVar[dict]] = None,
+        logger: interface.IOtelLogger | None = None,
+        log_context: ContextVar[dict] | None = None,
     ):
         protocol = "https" if use_https else "http"
         self.base_url = f"{protocol}://{host}:{port}{prefix}"
@@ -157,7 +157,7 @@ class AsyncHTTPClient:
         self.retry_max_wait = retry_max_wait
 
         # Circuit Breaker
-        self.circuit_breaker: Optional[CircuitBreaker] = None
+        self.circuit_breaker: CircuitBreaker | None = None
         if circuit_breaker_enabled:
             self.circuit_breaker = CircuitBreaker(
                 failure_threshold=circuit_breaker_threshold,
@@ -190,7 +190,7 @@ class AsyncHTTPClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
-    def _prepare_headers(self, extra_headers: Optional[dict] = None) -> dict:
+    def _prepare_headers(self, extra_headers: dict | None = None) -> dict:
         headers = {**self.default_headers, **(extra_headers or {})}
 
         if self.log_context:
@@ -281,5 +281,5 @@ class AsyncHTTPClient:
             self.circuit_breaker.reset()
 
     @property
-    def circuit_breaker_state(self) -> Optional[str]:
+    def circuit_breaker_state(self) -> str | None:
         return self.circuit_breaker.state if self.circuit_breaker else None

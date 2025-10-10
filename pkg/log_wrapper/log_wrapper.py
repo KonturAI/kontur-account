@@ -1,7 +1,9 @@
 import functools
-import traceback
-from typing import Callable, Any
 import inspect
+import traceback
+from collections.abc import Callable
+from typing import Any
+
 
 def auto_log():
     def decorator(func: Callable) -> Callable:

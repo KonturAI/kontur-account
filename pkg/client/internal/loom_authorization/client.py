@@ -2,8 +2,7 @@ from contextvars import ContextVar
 
 from opentelemetry.trace import SpanKind
 
-from internal import model
-from internal import interface
+from internal import interface, model
 from pkg.client.client import AsyncHTTPClient
 from pkg.trace_wrapper import traced_method
 

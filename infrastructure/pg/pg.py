@@ -1,6 +1,6 @@
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
-from opentelemetry.trace import Status, StatusCode, SpanKind
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 

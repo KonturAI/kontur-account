@@ -1,26 +1,28 @@
 from contextvars import ContextVar
 
-from opentelemetry import trace, metrics, propagate
-from opentelemetry.sdk.trace import TracerProvider, SpanLimits
+from opentelemetry import metrics, propagate, trace
 from opentelemetry._logs import set_logger_provider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.trace.sampling import TraceIdRatioBased, ALWAYS_ON
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.baggage.propagation import W3CBaggagePropagator
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.propagators.composite import CompositePropagator
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import SpanLimits, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace.sampling import ALWAYS_ON
 from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.baggage.propagation import W3CBaggagePropagator
-from opentelemetry.propagators.composite import CompositePropagator
 
-from .logger import OtelLogger
-from .alertmanger import AlertManager
 from internal import interface
+
+from .alertmanger import AlertManager
+from .logger import OtelLogger
+
 
 class Telemetry(interface.ITelemetry):
     def __init__(

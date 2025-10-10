@@ -1,4 +1,4 @@
-from internal import interface, model
+from internal import interface
 from internal.migration.base import Migration, MigrationInfo
 
 

@@ -1,6 +1,5 @@
 import importlib
 from pathlib import Path
-from typing import Optional
 
 from internal import interface, model
 from internal.migration.base import Migration
@@ -175,7 +174,7 @@ class MigrationManager:
             print(f"🔍 Traceback:\n{traceback.format_exc()}", flush=True)
             return 0
 
-    async def rollback_to_version(self, target_version: Optional[str] = None) -> int:
+    async def rollback_to_version(self, target_version: str | None = None) -> int:
         print("", flush=True)
         print("═══════════════════════════════════════════════════════════", flush=True)
         print(

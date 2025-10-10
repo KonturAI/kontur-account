@@ -1,7 +1,7 @@
+from internal import common, interface, model
 from pkg.trace_wrapper import traced_method
 
 from .sql_query import *
-from internal import interface, model, common
 
 
 class AccountRepo(interface.IAccountRepo):

@@ -1,7 +1,9 @@
-from functools import wraps
-from typing import Any, Callable
-from opentelemetry.trace import SpanKind, StatusCode
 import inspect
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
+
+from opentelemetry.trace import SpanKind, StatusCode
 
 
 def traced_method(

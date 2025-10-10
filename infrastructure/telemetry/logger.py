@@ -1,14 +1,11 @@
-import logging
-
 import inspect
+import logging
 from contextvars import ContextVar
-from typing import Union
 
 from opentelemetry import trace
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 
-from internal import common
-from internal import interface
+from internal import common, interface
 
 from .alertmanger import AlertManager
 
@@ -81,7 +78,7 @@ class OtelLogger(interface.IOtelLogger):
             extra_attrs[key] = self._convert_value(value)
         return extra_attrs
 
-    def _convert_value(self, value) -> Union[str, int, float, bool]:
+    def _convert_value(self, value) -> str | int | float | bool:
         if isinstance(value, (str, int, float, bool)):
             return value
         return str(value)

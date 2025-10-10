@@ -1,15 +1,13 @@
-import time
-import traceback
+from collections.abc import Callable
 from contextvars import ContextVar
-from typing import Callable
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-
 from opentelemetry import propagate
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from internal import interface, common, model
+from internal import common, interface, model
 
 
 class HttpMiddleware(interface.IHttpMiddleware):

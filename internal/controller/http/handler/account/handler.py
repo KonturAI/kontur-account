@@ -3,8 +3,13 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from internal import interface
 from internal.controller.http.handler.account.model import (
-    RegisterBody, LoginBody, SetTwoFaBody, DeleteTwoFaBody,
-    VerifyTwoFaBody, RecoveryPasswordBody, ChangePasswordBody
+    ChangePasswordBody,
+    DeleteTwoFaBody,
+    LoginBody,
+    RecoveryPasswordBody,
+    RegisterBody,
+    SetTwoFaBody,
+    VerifyTwoFaBody,
 )
 from pkg.log_wrapper import auto_log
 from pkg.trace_wrapper import traced_method

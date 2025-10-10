@@ -1,8 +1,9 @@
+import asyncio
+import json
+from typing import Any
+
 import redis.asyncio as aioredis
 from redis.connection import ConnectionPool
-from typing import Any
-import json
-import asyncio
 
 from internal import interface
 
@@ -54,7 +55,7 @@ class RedisClient(interface.IRedis):
             if value is None:
                 return default
             return self._deserialize_value(value)
-        except Exception as e:
+        except Exception:
             return default
 
     async def get_async_client(self) -> aioredis.Redis:
@@ -87,7 +88,7 @@ class RedisClient(interface.IRedis):
             if self.async_pool:
                 asyncio.create_task(self.async_pool.aclose())
             self.pool.disconnect()
-        except Exception as e:
+        except Exception:
             pass
 
     def __enter__(self):

@@ -1,12 +1,11 @@
 import asyncio
-import re
 from datetime import datetime
 
 import httpx
 import openai
 from aiogram import Bot
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums import ParseMode
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from infrastructure.redis_client.redis_client import RedisClient
 
@@ -96,7 +95,7 @@ class AlertManager:
                     text += f"\n\n{llm_analysis}"
             except Exception as e:
                 print(f"Ошибка при генерации анализа LLM: {e}", flush=True)
-                text += f"\n\n<i>⚠️ Анализ LLM временно недоступен</i>"
+                text += "\n\n<i>⚠️ Анализ LLM временно недоступен</i>"
 
         # Форматируем текст для Telegram
         text = self._format_telegram_text(text)

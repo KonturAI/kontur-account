@@ -1,7 +1,5 @@
-from datetime import datetime
 from dataclasses import dataclass
-from typing import List, Optional
-from enum import Enum
+from datetime import datetime
 
 
 @dataclass
@@ -15,7 +13,7 @@ class Account:
     created_at: datetime
 
     @classmethod
-    def serialize(cls, rows) -> List['Account']:
+    def serialize(cls, rows) -> list['Account']:
         return [
             cls(
                 id=row.id,

@@ -1,14 +1,10 @@
-import io
 from abc import abstractmethod
-from typing import Protocol, Sequence, Any
+from collections.abc import Sequence
+from typing import Any, Protocol
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 from opentelemetry.metrics import Meter
 from opentelemetry.trace import Tracer
-from starlette.responses import StreamingResponse
-
-from internal import model
 
 
 class IOtelLogger(Protocol):
