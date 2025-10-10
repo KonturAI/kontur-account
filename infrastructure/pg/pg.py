@@ -18,7 +18,7 @@ def NewPool(
         f"postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}",
         echo=False,
         future=True,
-        pool_size=15,
+        pool_size=50,
         max_overflow=15,
         pool_recycle=300
     )

@@ -1,5 +1,5 @@
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
 
 from internal.app.http.app import NewHTTP
 from internal.controller.http.handler.account.handler import AccountController
@@ -8,7 +8,7 @@ from internal.service.account.service import AccountService
 
 
 @pytest.fixture
-def test_client(
+async def test_client(
     db,
     mock_tel,
     account_repo,
@@ -42,4 +42,5 @@ def test_client(
         prefix="/api/account"
     )
 
-    return TestClient(app)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        yield client
