@@ -17,9 +17,9 @@ from pkg.trace_wrapper import traced_method
 
 class AccountController(interface.IAccountController):
     def __init__(
-            self,
-            tel: interface.ITelemetry,
-            account_service: interface.IAccountService,
+        self,
+        tel: interface.ITelemetry,
+        account_service: interface.IAccountService,
     ):
         self.tracer = tel.tracer()
         self.logger = tel.logger()
@@ -28,22 +28,12 @@ class AccountController(interface.IAccountController):
     @auto_log()
     @traced_method()
     async def register(self, body: RegisterBody) -> JSONResponse:
-        authorization_data = await self.account_service.register(
-            login=body.login,
-            password=body.password
-        )
+        authorization_data = await self.account_service.register(login=body.login, password=body.password)
 
-        response = JSONResponse(
-            status_code=201,
-            content={"account_id": authorization_data.account_id}
-        )
+        response = JSONResponse(status_code=201, content={"account_id": authorization_data.account_id})
 
         response.set_cookie(
-            key="Access-Token",
-            value=authorization_data.access_token,
-            httponly=True,
-            secure=True,
-            samesite="lax"
+            key="Access-Token", value=authorization_data.access_token, httponly=True, secure=True, samesite="lax"
         )
         response.set_cookie(
             key="Refresh-Token",
@@ -58,29 +48,15 @@ class AccountController(interface.IAccountController):
     @auto_log()
     @traced_method()
     async def register_from_tg(self, body: RegisterBody) -> JSONResponse:
-        authorization_data = await self.account_service.register_from_tg(
-            login=body.login,
-            password=body.password
-        )
+        authorization_data = await self.account_service.register_from_tg(login=body.login, password=body.password)
 
-        response = JSONResponse(
-            status_code=201,
-            content={"account_id": authorization_data.account_id}
-        )
+        response = JSONResponse(status_code=201, content={"account_id": authorization_data.account_id})
 
         response.set_cookie(
-            key="Access-Token",
-            value=authorization_data.access_token,
-            httponly=True,
-            secure=True,
-            samesite="lax"
+            key="Access-Token", value=authorization_data.access_token, httponly=True, secure=True, samesite="lax"
         )
         response.set_cookie(
-            key="Refresh-Token",
-            value=authorization_data.refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="lax"
+            key="Refresh-Token", value=authorization_data.refresh_token, httponly=True, secure=True, samesite="lax"
         )
 
         return response
@@ -88,30 +64,15 @@ class AccountController(interface.IAccountController):
     @auto_log()
     @traced_method()
     async def login(self, body: LoginBody) -> JSONResponse:
-        authorization_data = await self.account_service.login(
-            login=body.login,
-            password=body.password
-        )
+        authorization_data = await self.account_service.login(login=body.login, password=body.password)
 
-
-        response = JSONResponse(
-            status_code=200,
-            content={"account_id": authorization_data.account_id}
-        )
+        response = JSONResponse(status_code=200, content={"account_id": authorization_data.account_id})
 
         response.set_cookie(
-            key="Access-Token",
-            value=authorization_data.access_token,
-            httponly=True,
-            secure=True,
-            samesite="lax"
+            key="Access-Token", value=authorization_data.access_token, httponly=True, secure=True, samesite="lax"
         )
         response.set_cookie(
-            key="Refresh-Token",
-            value=authorization_data.refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="lax"
+            key="Refresh-Token", value=authorization_data.refresh_token, httponly=True, secure=True, samesite="lax"
         )
 
         return response
@@ -123,10 +84,7 @@ class AccountController(interface.IAccountController):
         account_id = authorization_data.account_id
 
         if account_id == 0:
-            return JSONResponse(
-                status_code=403,
-                content={}
-            )
+            return JSONResponse(status_code=403, content={})
         two_fa_key, qr_image = await self.account_service.generate_two_fa_key(account_id)
 
         def iterfile():
@@ -142,10 +100,7 @@ class AccountController(interface.IAccountController):
         response = StreamingResponse(
             iterfile(),
             media_type="image/png",
-            headers={
-                "X-TwoFA-Key": two_fa_key,
-                "Content-Disposition": "inline; filename=qr_code.png"
-            }
+            headers={"X-TwoFA-Key": two_fa_key, "Content-Disposition": "inline; filename=qr_code.png"},
         )
 
         return response
@@ -157,15 +112,10 @@ class AccountController(interface.IAccountController):
         account_id = authorization_data.account_id
 
         if account_id == 0:
-            return JSONResponse(
-                status_code=403,
-                content={}
-            )
+            return JSONResponse(status_code=403, content={})
 
         await self.account_service.set_two_fa_key(
-            account_id=account_id,
-            google_two_fa_key=body.google_two_fa_key,
-            google_two_fa_code=body.google_two_fa_code
+            account_id=account_id, google_two_fa_key=body.google_two_fa_key, google_two_fa_code=body.google_two_fa_code
         )
         return JSONResponse(status_code=200, content={})
 
@@ -176,15 +126,9 @@ class AccountController(interface.IAccountController):
         account_id = authorization_data.account_id
 
         if account_id == 0:
-            return JSONResponse(
-                status_code=403,
-                content={}
-            )
+            return JSONResponse(status_code=403, content={})
 
-        await self.account_service.delete_two_fa_key(
-            account_id=account_id,
-            google_two_fa_code=body.google_two_fa_code
-        )
+        await self.account_service.delete_two_fa_key(account_id=account_id, google_two_fa_code=body.google_two_fa_code)
 
         return JSONResponse(status_code=200, content={})
 
@@ -195,20 +139,13 @@ class AccountController(interface.IAccountController):
         account_id = authorization_data.account_id
 
         if account_id == 0:
-            return JSONResponse(
-                status_code=403,
-                content={}
-            )
+            return JSONResponse(status_code=403, content={})
 
         is_valid = await self.account_service.verify_two(
-            account_id=account_id,
-            google_two_fa_code=body.google_two_fa_code
+            account_id=account_id, google_two_fa_code=body.google_two_fa_code
         )
 
-        return JSONResponse(
-            status_code=200,
-            content={"is_valid": is_valid}
-        )
+        return JSONResponse(status_code=200, content={"is_valid": is_valid})
 
     @auto_log()
     @traced_method()
@@ -217,15 +154,9 @@ class AccountController(interface.IAccountController):
         account_id = authorization_data.account_id
 
         if account_id == 0:
-            return JSONResponse(
-                status_code=403,
-                content={}
-            )
+            return JSONResponse(status_code=403, content={})
 
-        await self.account_service.recovery_password(
-            account_id=account_id,
-            new_password=body.new_password
-        )
+        await self.account_service.recovery_password(account_id=account_id, new_password=body.new_password)
 
         return JSONResponse(status_code=200, content={})
 
@@ -236,15 +167,10 @@ class AccountController(interface.IAccountController):
         account_id = authorization_data.account_id
 
         if account_id == 0:
-            return JSONResponse(
-                status_code=403,
-                content={}
-            )
+            return JSONResponse(status_code=403, content={})
 
         await self.account_service.change_password(
-            account_id=account_id,
-            new_password=body.new_password,
-            old_password=body.old_password
+            account_id=account_id, new_password=body.new_password, old_password=body.old_password
         )
 
         return JSONResponse(status_code=200, content={})

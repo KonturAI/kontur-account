@@ -10,11 +10,11 @@ from pkg.trace_wrapper import traced_method
 
 class AccountService(interface.IAccountService):
     def __init__(
-            self,
-            tel: interface.ITelemetry,
-            account_repo: interface.IAccountRepo,
-            loom_authorization_client: interface.ILoomAuthorizationClient,
-            password_secret_key: str
+        self,
+        tel: interface.ITelemetry,
+        account_repo: interface.IAccountRepo,
+        loom_authorization_client: interface.ILoomAuthorizationClient,
+        password_secret_key: str,
     ):
         self.tracer = tel.tracer()
         self.logger = tel.logger()
@@ -27,11 +27,7 @@ class AccountService(interface.IAccountService):
         hashed_password = self.__hash_password(password)
         account_id = await self.account_repo.create_account(login, hashed_password)
 
-        jwt_token = await self.loom_authorization_client.authorization(
-            account_id,
-            False,
-            "employee"
-        )
+        jwt_token = await self.loom_authorization_client.authorization(account_id, False, "employee")
 
         return model.AuthorizationDataDTO(
             account_id=account_id,
@@ -44,11 +40,7 @@ class AccountService(interface.IAccountService):
         hashed_password = self.__hash_password(password)
         account_id = await self.account_repo.create_account(login, hashed_password)
 
-        jwt_token = await self.loom_authorization_client.authorization_tg(
-            account_id,
-            False,
-            "employee"
-        )
+        jwt_token = await self.loom_authorization_client.authorization_tg(account_id, False, "employee")
 
         return model.AuthorizationDataDTO(
             account_id=account_id,
@@ -69,9 +61,7 @@ class AccountService(interface.IAccountService):
             raise common.ErrInvalidPassword()
 
         jwt_token = await self.loom_authorization_client.authorization(
-            account.id,
-            True if account.google_two_fa_key else False,
-            "employee"
+            account.id, True if account.google_two_fa_key else False, "employee"
         )
 
         return model.AuthorizationDataDTO(
@@ -84,8 +74,7 @@ class AccountService(interface.IAccountService):
     async def generate_two_fa_key(self, account_id: int) -> tuple[str, io.BytesIO]:
         two_fa_key = pyotp.random_base32()
         totp_auth = pyotp.totp.TOTP(two_fa_key).provisioning_uri(
-            name=f"account_id-{account_id}",
-            issuer_name="crmessenger"
+            name=f"account_id-{account_id}", issuer_name="crmessenger"
         )
 
         qr_image = io.BytesIO()
@@ -151,7 +140,7 @@ class AccountService(interface.IAccountService):
 
     def __verify_password(self, hashed_password: str, password: str) -> bool:
         peppered_password = self.password_secret_key + password
-        return bcrypt.checkpw(peppered_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        return bcrypt.checkpw(peppered_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
     def __verify_two_fa(self, two_fa_code: str, two_fa_key: str) -> bool:
         totp = pyotp.TOTP(two_fa_key)
@@ -159,6 +148,6 @@ class AccountService(interface.IAccountService):
 
     def __hash_password(self, password: str) -> str:
         peppered_password = self.password_secret_key + password
-        hashed_password = bcrypt.hashpw(peppered_password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = bcrypt.hashpw(peppered_password.encode("utf-8"), bcrypt.gensalt())
 
-        return hashed_password.decode('utf-8')
+        return hashed_password.decode("utf-8")

@@ -7,33 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from internal import interface
 
 
-def NewPool(
-        db_user,
-        db_pass,
-        db_host
-        , db_port,
-        db_name
-):
+def NewPool(db_user, db_pass, db_host, db_port, db_name):
     async_engine = create_async_engine(
         f"postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}",
         echo=False,
         future=True,
         pool_size=15,
         max_overflow=15,
-        pool_recycle=300
+        pool_recycle=300,
     )
 
-    pool = async_sessionmaker(
-        bind=async_engine,
-        class_=AsyncSession,
-        autoflush=False,
-        expire_on_commit=False
-    )
+    pool = async_sessionmaker(bind=async_engine, class_=AsyncSession, autoflush=False, expire_on_commit=False)
     return pool
 
 
 class PG(interface.IDB):
-
     def __init__(self, tel: interface.ITelemetry, db_user, db_pass, db_host, db_port, db_name):
         self.pool = NewPool(db_user, db_pass, db_host, db_port, db_name)
         self.tracer = tel.tracer()
@@ -61,10 +49,7 @@ class PG(interface.IDB):
             rows = result.all()
             return rows
 
-    async def multi_query(
-            self,
-            queries: list[str]
-    ) -> None:
+    async def multi_query(self, queries: list[str]) -> None:
         async with self.pool() as session:
             for query in queries:
                 await session.execute(text(query))

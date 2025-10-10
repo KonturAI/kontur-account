@@ -14,4 +14,3 @@ HTTP_REQUEST_DURATION_KEY = "http.server.request.duration"
 TELEGRAM_CHAT_ID_KEY = "telegram.chat.id"
 TELEGRAM_USER_USERNAME_KEY = "telegram.user.username"
 TELEGRAM_EVENT_TYPE_KEY = "telegram.event.type"
-

@@ -13,14 +13,14 @@ class Account:
     created_at: datetime
 
     @classmethod
-    def serialize(cls, rows) -> list['Account']:
+    def serialize(cls, rows) -> list["Account"]:
         return [
             cls(
                 id=row.id,
                 login=row.login,
                 password=row.password,
                 google_two_fa_key=row.google_two_fa_key,
-                created_at=row.created_at
+                created_at=row.created_at,
             )
             for row in rows
         ]
@@ -31,5 +31,5 @@ class Account:
             "login": self.login,
             "password": self.password,
             "google_two_fa_key": self.google_two_fa_key,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
         }

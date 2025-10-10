@@ -14,7 +14,7 @@ from pkg.client.internal.loom_authorization.client import LoomAuthorizationClien
 
 cfg = Config()
 
-log_context: ContextVar[dict] = ContextVar('log_context', default={})
+log_context: ContextVar[dict] = ContextVar("log_context", default={})
 
 alert_manager = AlertManager(
     cfg.alert_tg_bot_token,
@@ -37,7 +37,7 @@ tel = Telemetry(
     cfg.otlp_host,
     cfg.otlp_port,
     log_context,
-    alert_manager
+    alert_manager,
 )
 
 # Инициализация клиентов
@@ -59,7 +59,7 @@ account_service = AccountService(
     tel=tel,
     account_repo=account_repo,
     loom_authorization_client=loom_authorization_client,
-    password_secret_key=cfg.password_secret_key
+    password_secret_key=cfg.password_secret_key,
 )
 
 # Инициализация контроллеров

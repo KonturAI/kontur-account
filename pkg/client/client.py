@@ -35,11 +35,7 @@ class CircuitBreaker:
 
     async def call(self, func: Callable, *args, **kwargs):
         if self._state == "open":
-            time_since_failure = (
-                datetime.now() - self._last_failure_time
-                if self._last_failure_time
-                else timedelta(0)
-            )
+            time_since_failure = datetime.now() - self._last_failure_time if self._last_failure_time else timedelta(0)
 
             if time_since_failure > timedelta(seconds=self.recovery_timeout):
                 self._state = "half-open"
@@ -48,12 +44,8 @@ class CircuitBreaker:
             else:
                 if self.logger:
                     remaining = self.recovery_timeout - time_since_failure.total_seconds()
-                    self.logger.warning(
-                        f"Circuit breaker OPEN. Recovery in {remaining:.1f}s"
-                    )
-                raise Exception(
-                    f"Circuit breaker is OPEN (failures: {self._failure_count})"
-                )
+                    self.logger.warning(f"Circuit breaker OPEN. Recovery in {remaining:.1f}s")
+                raise Exception(f"Circuit breaker is OPEN (failures: {self._failure_count})")
 
         try:
             result = await func(*args, **kwargs)
@@ -80,8 +72,7 @@ class CircuitBreaker:
             self._state = "open"
             if self.logger:
                 self.logger.warning(
-                    f"Circuit breaker: {old_state} -> open "
-                    f"(failures: {self._failure_count}/{self.failure_threshold})"
+                    f"Circuit breaker: {old_state} -> open (failures: {self._failure_count}/{self.failure_threshold})"
                 )
 
     def reset(self):
@@ -205,16 +196,12 @@ class AsyncHTTPClient:
 
         return headers
 
-    async def _execute_request(
-        self, method: str, url: str, **kwargs
-    ) -> httpx.Response:
+    async def _execute_request(self, method: str, url: str, **kwargs) -> httpx.Response:
         headers = self._prepare_headers(kwargs.pop("headers", None))
         cookies = {**self.default_cookies, **kwargs.pop("cookies", {})}
 
         async def _make_request():
-            response = await self.session.request(
-                method, url, headers=headers, cookies=cookies, **kwargs
-            )
+            response = await self.session.request(method, url, headers=headers, cookies=cookies, **kwargs)
             response.raise_for_status()
             return response
 
@@ -223,9 +210,7 @@ class AsyncHTTPClient:
         else:
             return await _make_request()
 
-    async def _request_with_retry(
-        self, method: str, url: str, **kwargs
-    ) -> httpx.Response | None:
+    async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response | None:
         if self.retry_attempts <= 1:
             return await self._execute_request(method, url, **kwargs)
 
@@ -249,9 +234,7 @@ class AsyncHTTPClient:
 
                     # Логировать если была не первая попытка
                     if attempt_num > 1 and self.logger:
-                        self.logger.info(
-                            f"Request {method} {url} succeeded after {attempt_num} attempts"
-                        )
+                        self.logger.info(f"Request {method} {url} succeeded after {attempt_num} attempts")
 
                     return response
 

@@ -16,11 +16,11 @@ class MigrationManager:
         print("📂 MigrationManager: Загрузка миграций...", flush=True)
         try:
             migrations = {}
-            migration_dir = Path(__file__).parent / 'version'
+            migration_dir = Path(__file__).parent / "version"
             print(f"📁 MigrationManager: Директория миграций: {migration_dir}", flush=True)
 
-            for file_path in sorted(migration_dir.glob('v*.py')):
-                if file_path.stem == '__init__':
+            for file_path in sorted(migration_dir.glob("v*.py")):
+                if file_path.stem == "__init__":
                     continue
 
                 print(f"📄 MigrationManager: Обработка файла {file_path.stem}", flush=True)
@@ -28,14 +28,13 @@ class MigrationManager:
 
                 for attr in dir(module):
                     obj = getattr(module, attr)
-                    if (isinstance(obj, type) and
-                            issubclass(obj, Migration) and
-                            obj != Migration):
+                    if isinstance(obj, type) and issubclass(obj, Migration) and obj != Migration:
                         migration = obj()
                         migrations[migration.info.version] = migration
                         print(
                             f"✅ MigrationManager: Добавлена миграция {migration.info.version} - {migration.info.name}",
-                            flush=True)
+                            flush=True,
+                        )
                         break
 
             print(f"📋 MigrationManager: Все миграции: {list(migrations.keys())}", flush=True)
@@ -71,10 +70,7 @@ class MigrationManager:
     async def _get_applied_versions(self) -> set[str]:
         print("🔍 MigrationManager: Получение примененных версий...", flush=True)
         try:
-            rows = await self.db.select(
-                "SELECT version FROM migration_history ORDER BY version",
-                {}
-            )
+            rows = await self.db.select("SELECT version FROM migration_history ORDER BY version", {})
             applied = {row[0] for row in rows}
             print(f"📊 MigrationManager: Применённые версии: {applied if applied else 'нет'}", flush=True)
             return applied
@@ -86,20 +82,17 @@ class MigrationManager:
         print(f"💾 MigrationManager: Отметка миграции {migration.info.version} как примененной...", flush=True)
         await self.db.insert(
             "INSERT INTO migration_history (version, name) VALUES (:version, :name) RETURNING id",
-            {'version': migration.info.version, 'name': migration.info.name}
+            {"version": migration.info.version, "name": migration.info.name},
         )
         print(f"✅ MigrationManager: Миграция {migration.info.version} отмечена как примененная", flush=True)
 
     async def _mark_rolled_back(self, version: str):
         print(f"🔙 MigrationManager: Отметка миграции {version} как откаченной...", flush=True)
-        await self.db.delete(
-            "DELETE FROM migration_history WHERE version = :version",
-            {'version': version}
-        )
+        await self.db.delete("DELETE FROM migration_history WHERE version = :version", {"version": version})
         print(f"✅ MigrationManager: Миграция {version} откачена", flush=True)
 
     def _version_key(self, version: str) -> tuple:
-        key = tuple(map(int, version.lstrip('v').split('_')))
+        key = tuple(map(int, version.lstrip("v").split("_")))
         print(f"🔑 MigrationManager: Ключ версии для {version}: {key}", flush=True)
         return key
 
@@ -126,8 +119,7 @@ class MigrationManager:
             print(f"🎯 MigrationManager: Целевой ключ версии: {target_key}", flush=True)
 
             for version in sorted(self.migrations.keys(), key=self._version_key):
-                if (self._version_key(version) <= target_key and
-                        version not in applied):
+                if self._version_key(version) <= target_key and version not in applied:
                     to_apply.append(version)
                     print(f"📌 MigrationManager: Будет применена миграция {version}", flush=True)
 
@@ -142,14 +134,16 @@ class MigrationManager:
             count = 0
             for version in to_apply:
                 migration = self.migrations[version]
-                print(f"⬆️  MigrationManager: Применение миграции {version} ({count + 1}/{len(to_apply)})...",
-                      flush=True)
+                print(
+                    f"⬆️  MigrationManager: Применение миграции {version} ({count + 1}/{len(to_apply)})...", flush=True
+                )
 
                 # Проверяем зависимости
                 if migration.info.depends_on and migration.info.depends_on not in applied:
                     print(
                         f"⏭️  MigrationManager: Пропуск {version} - зависимость {migration.info.depends_on} не выполнена",
-                        flush=True)
+                        flush=True,
+                    )
                     continue
 
                 await migration.up(self.db)
@@ -171,6 +165,7 @@ class MigrationManager:
             print("═══════════════════════════════════════════════════════════", flush=True)
             print("", flush=True)
             import traceback
+
             print(f"🔍 Traceback:\n{traceback.format_exc()}", flush=True)
             return 0
 
@@ -179,7 +174,8 @@ class MigrationManager:
         print("═══════════════════════════════════════════════════════════", flush=True)
         print(
             f"🔙 MigrationManager: Начало отката к версии {target_version if target_version else 'начальному состоянию'}",
-            flush=True)
+            flush=True,
+        )
         print("═══════════════════════════════════════════════════════════", flush=True)
         try:
             await self._ensure_history_table()
@@ -214,8 +210,9 @@ class MigrationManager:
             count = 0
             for version in to_rollback:
                 if version in self.migrations:
-                    print(f"⬇️  MigrationManager: Откат миграции {version} ({count + 1}/{len(to_rollback)})...",
-                          flush=True)
+                    print(
+                        f"⬇️  MigrationManager: Откат миграции {version} ({count + 1}/{len(to_rollback)})...", flush=True
+                    )
                     migration = self.migrations[version]
                     await migration.down(self.db)
                     await self._mark_rolled_back(version)
@@ -225,7 +222,8 @@ class MigrationManager:
                 else:
                     print(
                         f"⚠️  MigrationManager: ПРЕДУПРЕЖДЕНИЕ - Миграция {version} не найдена в загруженных миграциях",
-                        flush=True)
+                        flush=True,
+                    )
 
             print("═══════════════════════════════════════════════════════════", flush=True)
             print(f"🎉 MigrationManager: Откат завершен. Откачено {count} миграций", flush=True)
@@ -239,6 +237,7 @@ class MigrationManager:
             print("═══════════════════════════════════════════════════════════", flush=True)
             print("", flush=True)
             import traceback
+
             print(f"🔍 Traceback:\n{traceback.format_exc()}", flush=True)
             return 0
 
@@ -258,4 +257,5 @@ class MigrationManager:
             print("═══════════════════════════════════════════════════════════", flush=True)
             print("", flush=True)
             import traceback
+
             print(f"🔍 Traceback:\n{traceback.format_exc()}", flush=True)

@@ -12,7 +12,7 @@ def auto_log():
             class_name = self.__class__.__name__
             method_name = func.__name__
 
-            logger = getattr(self, 'logger', None)
+            logger = getattr(self, "logger", None)
 
             if logger:
                 logger.info(f"Начало {class_name}.{method_name}")
@@ -26,9 +26,12 @@ def auto_log():
                 return result
             except Exception as e:
                 if logger:
-                    logger.error(f"Ошибка в {class_name}.{method_name}: {str(e)}", {
-                        "traceback": traceback.format_exc(),
-                    })
+                    logger.error(
+                        f"Ошибка в {class_name}.{method_name}: {str(e)}",
+                        {
+                            "traceback": traceback.format_exc(),
+                        },
+                    )
                 raise
 
         @functools.wraps(func)
@@ -36,7 +39,7 @@ def auto_log():
             class_name = self.__class__.__name__
             method_name = func.__name__
 
-            logger = getattr(self, 'logger', None)
+            logger = getattr(self, "logger", None)
 
             if logger:
                 logger.info(f"Начало {class_name}.{method_name}")
@@ -50,9 +53,12 @@ def auto_log():
                 return result
             except Exception as e:
                 if logger:
-                    logger.error(f"Ошибка в {class_name}.{method_name}: {str(e)}", {
-                        "traceback": traceback.format_exc(),
-                    })
+                    logger.error(
+                        f"Ошибка в {class_name}.{method_name}: {str(e)}",
+                        {
+                            "traceback": traceback.format_exc(),
+                        },
+                    )
                 raise
 
         if inspect.iscoroutinefunction(func):
