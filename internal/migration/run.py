@@ -15,7 +15,7 @@ from internal.migration.manager import MigrationManager
 async def main():
     cfg = Config()
 
-    log_context: ContextVar[dict] = ContextVar('log_context', default={})
+    log_context: ContextVar[dict] = ContextVar("log_context", default={})
 
     tel = Telemetry(
         cfg.log_level,
@@ -25,7 +25,7 @@ async def main():
         cfg.service_version,
         cfg.otlp_host,
         cfg.otlp_port,
-        log_context
+        log_context,
     )
 
     db = PG(tel, cfg.db_user, cfg.db_pass, cfg.db_host, cfg.db_port, cfg.db_name)
@@ -33,10 +33,10 @@ async def main():
 
     import argparse
 
-    parser = argparse.ArgumentParser(description='Управление миграциями БД')
-    parser.add_argument('env', choices=['stage', 'prod'], help='Команда: stage или prod')
-    parser.add_argument('--command', choices=['up', 'down'], help='Команда: up или down')
-    parser.add_argument('--version', help='Версия миграции (например, v1.0.1)')
+    parser = argparse.ArgumentParser(description="Управление миграциями БД")
+    parser.add_argument("env", choices=["stage", "prod"], help="Команда: stage или prod")
+    parser.add_argument("--command", choices=["up", "down"], help="Команда: up или down")
+    parser.add_argument("--version", help="Версия миграции (например, v1.0.1)")
 
     args = parser.parse_args()
 

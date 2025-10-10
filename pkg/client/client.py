@@ -1,15 +1,15 @@
+from collections.abc import Callable
 from contextvars import ContextVar
 from datetime import datetime, timedelta
-from typing import Optional, Callable
 
 import httpx
+from opentelemetry import propagate
 from tenacity import (
-    stop_after_attempt,
     AsyncRetrying,
     RetryCallState,
+    stop_after_attempt,
     wait_exponential,
 )
-from opentelemetry import propagate
 
 from internal import interface
 
@@ -19,14 +19,14 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        logger: Optional[interface.IOtelLogger] = None,
+        logger: interface.IOtelLogger | None = None,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.logger = logger
 
         self._failure_count = 0
-        self._last_failure_time: Optional[datetime] = None
+        self._last_failure_time: datetime | None = None
         self._state = "closed"  # closed, open, half-open
 
     @property
@@ -35,11 +35,7 @@ class CircuitBreaker:
 
     async def call(self, func: Callable, *args, **kwargs):
         if self._state == "open":
-            time_since_failure = (
-                datetime.now() - self._last_failure_time
-                if self._last_failure_time
-                else timedelta(0)
-            )
+            time_since_failure = datetime.now() - self._last_failure_time if self._last_failure_time else timedelta(0)
 
             if time_since_failure > timedelta(seconds=self.recovery_timeout):
                 self._state = "half-open"
@@ -48,12 +44,8 @@ class CircuitBreaker:
             else:
                 if self.logger:
                     remaining = self.recovery_timeout - time_since_failure.total_seconds()
-                    self.logger.warning(
-                        f"Circuit breaker OPEN. Recovery in {remaining:.1f}s"
-                    )
-                raise Exception(
-                    f"Circuit breaker is OPEN (failures: {self._failure_count})"
-                )
+                    self.logger.warning(f"Circuit breaker OPEN. Recovery in {remaining:.1f}s")
+                raise Exception(f"Circuit breaker is OPEN (failures: {self._failure_count})")
 
         try:
             result = await func(*args, **kwargs)
@@ -67,7 +59,7 @@ class CircuitBreaker:
             self._failure_count = 0
             return result
 
-        except Exception as err:
+        except Exception:
             self._record_failure()
             raise
 
@@ -80,8 +72,7 @@ class CircuitBreaker:
             self._state = "open"
             if self.logger:
                 self.logger.warning(
-                    f"Circuit breaker: {old_state} -> open "
-                    f"(failures: {self._failure_count}/{self.failure_threshold})"
+                    f"Circuit breaker: {old_state} -> open (failures: {self._failure_count}/{self.failure_threshold})"
                 )
 
     def reset(self):
@@ -125,8 +116,8 @@ class AsyncHTTPClient:
         host: str,
         port: int,
         prefix: str = "",
-        headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
+        headers: dict | None = None,
+        cookies: dict | None = None,
         use_tracing: bool = False,
         use_https: bool = False,
         use_http2: bool = False,
@@ -139,8 +130,8 @@ class AsyncHTTPClient:
         circuit_breaker_enabled: bool = False,
         circuit_breaker_threshold: int = 5,
         circuit_breaker_timeout: int = 60,
-        logger: Optional[interface.IOtelLogger] = None,
-        log_context: Optional[ContextVar[dict]] = None,
+        logger: interface.IOtelLogger | None = None,
+        log_context: ContextVar[dict] | None = None,
     ):
         protocol = "https" if use_https else "http"
         self.base_url = f"{protocol}://{host}:{port}{prefix}"
@@ -157,7 +148,7 @@ class AsyncHTTPClient:
         self.retry_max_wait = retry_max_wait
 
         # Circuit Breaker
-        self.circuit_breaker: Optional[CircuitBreaker] = None
+        self.circuit_breaker: CircuitBreaker | None = None
         if circuit_breaker_enabled:
             self.circuit_breaker = CircuitBreaker(
                 failure_threshold=circuit_breaker_threshold,
@@ -190,7 +181,7 @@ class AsyncHTTPClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
-    def _prepare_headers(self, extra_headers: Optional[dict] = None) -> dict:
+    def _prepare_headers(self, extra_headers: dict | None = None) -> dict:
         headers = {**self.default_headers, **(extra_headers or {})}
 
         if self.log_context:
@@ -205,16 +196,12 @@ class AsyncHTTPClient:
 
         return headers
 
-    async def _execute_request(
-        self, method: str, url: str, **kwargs
-    ) -> httpx.Response:
+    async def _execute_request(self, method: str, url: str, **kwargs) -> httpx.Response:
         headers = self._prepare_headers(kwargs.pop("headers", None))
         cookies = {**self.default_cookies, **kwargs.pop("cookies", {})}
 
         async def _make_request():
-            response = await self.session.request(
-                method, url, headers=headers, cookies=cookies, **kwargs
-            )
+            response = await self.session.request(method, url, headers=headers, cookies=cookies, **kwargs)
             response.raise_for_status()
             return response
 
@@ -223,9 +210,7 @@ class AsyncHTTPClient:
         else:
             return await _make_request()
 
-    async def _request_with_retry(
-        self, method: str, url: str, **kwargs
-    ) -> httpx.Response | None:
+    async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response | None:
         if self.retry_attempts <= 1:
             return await self._execute_request(method, url, **kwargs)
 
@@ -249,9 +234,7 @@ class AsyncHTTPClient:
 
                     # Логировать если была не первая попытка
                     if attempt_num > 1 and self.logger:
-                        self.logger.info(
-                            f"Request {method} {url} succeeded after {attempt_num} attempts"
-                        )
+                        self.logger.info(f"Request {method} {url} succeeded after {attempt_num} attempts")
 
                     return response
 
@@ -281,5 +264,5 @@ class AsyncHTTPClient:
             self.circuit_breaker.reset()
 
     @property
-    def circuit_breaker_state(self) -> Optional[str]:
+    def circuit_breaker_state(self) -> str | None:
         return self.circuit_breaker.state if self.circuit_breaker else None

@@ -1,25 +1,26 @@
+import asyncio
+import json
+from typing import Any
+
 import redis.asyncio as aioredis
 from redis.connection import ConnectionPool
-from typing import Any
-import json
-import asyncio
 
 from internal import interface
 
 
 class RedisClient(interface.IRedis):
     def __init__(
-            self,
-            host: str,
-            port: int,
-            db: int,
-            password: str,
-            max_connections: int = 20,
-            socket_connect_timeout: int = 5,
-            socket_timeout: int = 5,
-            decode_responses: bool = True,
-            retry_on_timeout: bool = True,
-            health_check_interval: int = 30
+        self,
+        host: str,
+        port: int,
+        db: int,
+        password: str,
+        max_connections: int = 20,
+        socket_connect_timeout: int = 5,
+        socket_timeout: int = 5,
+        decode_responses: bool = True,
+        retry_on_timeout: bool = True,
+        health_check_interval: int = 30,
     ):
         self.pool = ConnectionPool(
             host=host,
@@ -31,7 +32,7 @@ class RedisClient(interface.IRedis):
             socket_timeout=socket_timeout,
             decode_responses=decode_responses,
             retry_on_timeout=retry_on_timeout,
-            health_check_interval=health_check_interval
+            health_check_interval=health_check_interval,
         )
 
         self.async_pool = None
@@ -54,7 +55,7 @@ class RedisClient(interface.IRedis):
             if value is None:
                 return default
             return self._deserialize_value(value)
-        except Exception as e:
+        except Exception:
             return default
 
     async def get_async_client(self) -> aioredis.Redis:
@@ -62,7 +63,7 @@ class RedisClient(interface.IRedis):
             self.async_pool = aioredis.ConnectionPool.from_url(
                 f"redis://:{self.pool.connection_kwargs.get('password')}@{self.pool.connection_kwargs['host']}:{self.pool.connection_kwargs['port']}/{self.pool.connection_kwargs['db']}",
                 max_connections=self.pool.max_connections,
-                decode_responses=True
+                decode_responses=True,
             )
             self.async_client = aioredis.Redis(connection_pool=self.async_pool)
         return self.async_client
@@ -87,7 +88,7 @@ class RedisClient(interface.IRedis):
             if self.async_pool:
                 asyncio.create_task(self.async_pool.aclose())
             self.pool.disconnect()
-        except Exception as e:
+        except Exception:
             pass
 
     def __enter__(self):

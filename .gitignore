@@ -1,1 +1,27 @@
 .idea
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+test_env/
+.venv/
+venv/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+
+# Linters and tools cache
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Environment variables
+.env
+.env.local

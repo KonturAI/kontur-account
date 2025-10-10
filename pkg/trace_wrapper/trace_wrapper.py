@@ -1,18 +1,18 @@
-from functools import wraps
-from typing import Any, Callable
-from opentelemetry.trace import SpanKind, StatusCode
 import inspect
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
+
+from opentelemetry.trace import SpanKind, StatusCode
 
 
 def traced_method(
-        span_kind: SpanKind = SpanKind.INTERNAL,
-        exclude_params: set[str] = None,
-        sensitive_params: set[str] = None
+    span_kind: SpanKind = SpanKind.INTERNAL, exclude_params: set[str] = None, sensitive_params: set[str] = None
 ):
     if exclude_params is None:
-        exclude_params = {'self', 'cls'}
+        exclude_params = {"self", "cls"}
     if sensitive_params is None:
-        sensitive_params = {'password', 'token', 'secret', 'api_key'}
+        sensitive_params = {"password", "token", "secret", "api_key"}
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -41,11 +41,7 @@ def traced_method(
                     attributes[param_name] = _serialize_value(param_value)
 
             # Создаем span
-            with self.tracer.start_as_current_span(
-                    span_name,
-                    kind=span_kind,
-                    attributes=attributes
-            ) as span:
+            with self.tracer.start_as_current_span(span_name, kind=span_kind, attributes=attributes) as span:
                 try:
                     result = await func(self, *args, **kwargs)
                     span.set_status(StatusCode.OK)
@@ -74,11 +70,7 @@ def traced_method(
                 else:
                     attributes[param_name] = _serialize_value(param_value)
 
-            with self.tracer.start_as_current_span(
-                    span_name,
-                    kind=span_kind,
-                    attributes=attributes
-            ) as span:
+            with self.tracer.start_as_current_span(span_name, kind=span_kind, attributes=attributes) as span:
                 try:
                     result = func(self, *args, **kwargs)
                     span.set_status(StatusCode.OK)

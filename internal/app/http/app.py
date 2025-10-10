@@ -1,16 +1,15 @@
 from fastapi import FastAPI
-
 from starlette.responses import StreamingResponse
 
-from internal import model, interface
+from internal import interface, model
 from internal.controller.http.handler.account.model import *
 
 
 def NewHTTP(
-        db: interface.IDB,
-        account_controller: interface.IAccountController,
-        http_middleware: interface.IHttpMiddleware,
-        prefix: str
+    db: interface.IDB,
+    account_controller: interface.IAccountController,
+    http_middleware: interface.IHttpMiddleware,
+    prefix: str,
 ):
     app = FastAPI(
         openapi_url=prefix + "/openapi.json",
@@ -26,19 +25,15 @@ def NewHTTP(
 
 
 def include_middleware(
-        app: FastAPI,
-        http_middleware: interface.IHttpMiddleware,
+    app: FastAPI,
+    http_middleware: interface.IHttpMiddleware,
 ):
     http_middleware.authorization_middleware03(app)
     http_middleware.logger_middleware02(app)
     http_middleware.trace_middleware01(app)
 
 
-def include_account_handlers(
-        app: FastAPI,
-        account_controller: interface.IAccountController,
-        prefix: str
-):
+def include_account_handlers(app: FastAPI, account_controller: interface.IAccountController, prefix: str):
     # Регистрация пользователя
     app.add_api_route(
         prefix + "/register",

@@ -3,25 +3,18 @@ from contextvars import ContextVar
 import uvicorn
 
 from infrastructure.pg.pg import PG
-from infrastructure.telemetry.telemetry import Telemetry, AlertManager
-
-from pkg.client.internal.loom_authorization.client import LoomAuthorizationClient
-
-from internal.controller.http.middlerware.middleware import HttpMiddleware
-
-from internal.controller.http.handler.account.handler import AccountController
-
-from internal.service.account.service import AccountService
-
-from internal.repo.account.repo import AccountRepo
-
+from infrastructure.telemetry.telemetry import AlertManager, Telemetry
 from internal.app.http.app import NewHTTP
-
 from internal.config.config import Config
+from internal.controller.http.handler.account.handler import AccountController
+from internal.controller.http.middlerware.middleware import HttpMiddleware
+from internal.repo.account.repo import AccountRepo
+from internal.service.account.service import AccountService
+from pkg.client.internal.loom_authorization.client import LoomAuthorizationClient
 
 cfg = Config()
 
-log_context: ContextVar[dict] = ContextVar('log_context', default={})
+log_context: ContextVar[dict] = ContextVar("log_context", default={})
 
 alert_manager = AlertManager(
     cfg.alert_tg_bot_token,
@@ -44,7 +37,7 @@ tel = Telemetry(
     cfg.otlp_host,
     cfg.otlp_port,
     log_context,
-    alert_manager
+    alert_manager,
 )
 
 # Инициализация клиентов
@@ -66,7 +59,7 @@ account_service = AccountService(
     tel=tel,
     account_repo=account_repo,
     loom_authorization_client=loom_authorization_client,
-    password_secret_key=cfg.password_secret_key
+    password_secret_key=cfg.password_secret_key,
 )
 
 # Инициализация контроллеров

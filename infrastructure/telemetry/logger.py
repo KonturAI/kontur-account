@@ -1,30 +1,24 @@
-import logging
-
 import inspect
+import logging
 from contextvars import ContextVar
-from typing import Union
 
 from opentelemetry import trace
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 
-from internal import common
-from internal import interface
+from internal import common, interface
 
 from .alertmanger import AlertManager
 
 
 class OtelLogger(interface.IOtelLogger):
     def __init__(
-            self,
-            alert_manger: AlertManager | None,
-            logger_provider: LoggerProvider,
-            service_name: str,
-            log_context: ContextVar[dict],
+        self,
+        alert_manger: AlertManager | None,
+        logger_provider: LoggerProvider,
+        service_name: str,
+        log_context: ContextVar[dict],
     ):
-        self.handler = LoggingHandler(
-            level=logging.DEBUG,
-            logger_provider=logger_provider
-        )
+        self.handler = LoggingHandler(level=logging.DEBUG, logger_provider=logger_provider)
         self.service_name = service_name
         self.log_context = log_context
 
@@ -53,24 +47,18 @@ class OtelLogger(interface.IOtelLogger):
         if current_span and current_span.get_span_context().is_valid:
             span_context = current_span.get_span_context()
 
-            trace_id = format(span_context.trace_id, '032x')
-            span_id = format(span_context.span_id, '016x')
+            trace_id = format(span_context.trace_id, "032x")
+            span_id = format(span_context.span_id, "016x")
 
-            attributes[common.TRACE_ID_KEY] =trace_id
-            attributes[common.SPAN_ID_KEY] =span_id
+            attributes[common.TRACE_ID_KEY] = trace_id
+            attributes[common.SPAN_ID_KEY] = span_id
 
             if level == "ERROR":
                 if self.alert_manger is not None:
-                    self.alert_manger.send_error_alert(
-                        trace_id,
-                        span_id,
-                        attributes.get(common.TRACEBACK_KEY, "")
-                    )
+                    self.alert_manger.send_error_alert(trace_id, span_id, attributes.get(common.TRACEBACK_KEY, ""))
 
         log_level = getattr(logging, level.upper(), logging.INFO)
         self.logger.log(log_level, self.service_name + " | " + message, extra=attributes)
-
-
 
     def _extract_extra_params(self, fields: dict) -> dict:
         extra_attrs = {}
@@ -81,7 +69,7 @@ class OtelLogger(interface.IOtelLogger):
             extra_attrs[key] = self._convert_value(value)
         return extra_attrs
 
-    def _convert_value(self, value) -> Union[str, int, float, bool]:
+    def _convert_value(self, value) -> str | int | float | bool:
         if isinstance(value, (str, int, float, bool)):
             return value
         return str(value)

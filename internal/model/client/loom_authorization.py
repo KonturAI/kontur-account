@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel
 
+
 @dataclass
 class AuthorizationDataDTO:
     account_id: int
