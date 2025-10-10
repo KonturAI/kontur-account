@@ -30,12 +30,6 @@ select = [
     "ASYNC",
 ]
 
-#ignore = [
-#    "E501",   # line too long (у нас 120, но иногда можно больше)
-#    "B008",   # do not perform function calls in argument defaults (часто нужно в FastAPI)
-#    "UP007",  # Use `X | Y` for type annotations (можем оставить Optional)
-#]
-
 # Разрешаем неиспользуемые переменные, начинающиеся с _
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
@@ -48,7 +42,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["internal", "infrastructure", "pkg"]
+known-first-party = ["infrastructure", "pkg", "internal"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.mypy]
