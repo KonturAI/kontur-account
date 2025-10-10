@@ -84,7 +84,7 @@ app = NewHTTP(
 
 if __name__ == "__main__":
     if cfg.environment == "prod":
-        workers = 4
+        workers = 2
     else:
         workers = 1
 
