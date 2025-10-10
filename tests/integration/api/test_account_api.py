@@ -1,8 +1,7 @@
 import pytest
 import pyotp
-from unittest.mock import AsyncMock
 
-from internal import model, common
+from internal import model
 
 
 class TestAccountApiRegister:
