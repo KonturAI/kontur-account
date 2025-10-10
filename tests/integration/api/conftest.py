@@ -5,32 +5,31 @@ from internal.app.http.app import NewHTTP
 from internal.controller.http.handler.account.handler import AccountController
 from internal.controller.http.middlerware.middleware import HttpMiddleware
 from internal.service.account.service import AccountService
-from tests.conftest import TEST_PASSWORD_SECRET
 
 
 @pytest.fixture
 def test_client(
     db,
-    tel,
+    mock_tel,
     account_repo,
     mock_loom_authorization_client,
     password_secret,
     log_context
 ):
     account_service = AccountService(
-        tel=tel,
+        tel=mock_tel,
         account_repo=account_repo,
         loom_authorization_client=mock_loom_authorization_client,
         password_secret_key=password_secret
     )
 
     account_controller = AccountController(
-        tel=tel,
+        tel=mock_tel,
         account_service=account_service
     )
 
     http_middleware = HttpMiddleware(
-        tel=tel,
+        tel=mock_tel,
         loom_authorization_client=mock_loom_authorization_client,
         prefix="/api/account",
         log_context=log_context
