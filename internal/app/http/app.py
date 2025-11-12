@@ -6,10 +6,11 @@ from internal.controller.http.handler.account.model import *
 
 
 def NewHTTP(
-    db: interface.IDB,
-    account_controller: interface.IAccountController,
-    http_middleware: interface.IHttpMiddleware,
-    prefix: str,
+        db: interface.IDB,
+        account_controller: interface.IAccountController,
+        http_middleware: interface.IHttpMiddleware,
+        prefix: str,
+        environment: str,
 ):
     app = FastAPI(
         openapi_url=prefix + "/openapi.json",
@@ -17,7 +18,7 @@ def NewHTTP(
         redoc_url=prefix + "/redoc",
     )
     include_middleware(app, http_middleware)
-    include_db_handler(app, db, prefix)
+    include_db_handler(app, db, prefix, environment)
 
     include_account_handlers(app, account_controller, prefix)
 
@@ -25,8 +26,8 @@ def NewHTTP(
 
 
 def include_middleware(
-    app: FastAPI,
-    http_middleware: interface.IHttpMiddleware,
+        app: FastAPI,
+        http_middleware: interface.IHttpMiddleware,
 ):
     http_middleware.authorization_middleware03(app)
     http_middleware.logger_middleware02(app)
@@ -107,9 +108,9 @@ def include_account_handlers(app: FastAPI, account_controller: interface.IAccoun
     )
 
 
-def include_db_handler(app: FastAPI, db: interface.IDB, prefix: str):
+def include_db_handler(app: FastAPI, db: interface.IDB, prefix: str, environment: str):
     app.add_api_route(prefix + "/table/create", create_table_handler(db), methods=["GET"])
-    app.add_api_route(prefix + "/table/drop", drop_table_handler(db), methods=["GET"])
+    app.add_api_route(prefix + "/table/drop", drop_table_handler(db, environment), methods=["GET"])
     app.add_api_route(prefix + "/health", heath_check_handler(), methods=["GET"])
 
 
@@ -130,8 +131,10 @@ def create_table_handler(db: interface.IDB):
     return create_table
 
 
-def drop_table_handler(db: interface.IDB):
+def drop_table_handler(db: interface.IDB, environment: str):
     async def drop_table():
+        if environment == "prod":
+            return
         try:
             await db.multi_query(model.drop_queries)
         except Exception as err:

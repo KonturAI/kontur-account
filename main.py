@@ -73,6 +73,7 @@ app = NewHTTP(
     account_controller=account_controller,
     http_middleware=http_middleware,
     prefix=cfg.prefix,
+    environment=cfg.environment,
 )
 
 if __name__ == "__main__":
